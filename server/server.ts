@@ -28,6 +28,8 @@ app.use(cors({
 }))
 app.use(express.json());
 
+app.set('trust proxy', 1); // trust first proxy
+
 app.use(session({
     secret: process.env.SESSION_SECRET as string,
     resave: false,

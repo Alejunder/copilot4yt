@@ -22,7 +22,9 @@ const app = express();
 
 app.use(cors({
     origin: ['http://localhost:3000', 'http://localhost:5173', 'https://copilot4yt.vercel.app'],
-    credentials: true, 
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }))
 app.use(express.json());
 
@@ -30,7 +32,12 @@ app.use(session({
     secret: process.env.SESSION_SECRET as string,
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: false, maxAge: 1000 * 60 * 60 * 24 * 7 }, // 7 days
+    cookie: { 
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        maxAge: 1000 * 60 * 60 * 24 * 7 
+    },
     store:  MongoStore.create({
         mongoUrl: process.env.MONGO_URI as string,
         collectionName: 'sessions',

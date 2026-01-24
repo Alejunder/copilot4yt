@@ -119,24 +119,23 @@ export const generateThumbnail = async (req: Request, res: Response) => {
       }
     }
 
-    const filename = `final-output-${Date.now()}.png`;
-    const filePath = path.join( 'images', filename);
+    // Upload directly to Cloudinary from buffer (Vercel-compatible)
+    const uploadResult = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        { resource_type: "image", folder: "thumbnails" },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      uploadStream.end(finalBuffer!);
+    });
 
-    // create images directory if it doesn't exist
-    fs.mkdirSync('images', { recursive: true });
-    // write the final image to the file
-    fs.writeFileSync(filePath, finalBuffer!);
-
-    const uploadResult = await cloudinary.uploader.upload(filePath, {resource_type: "image"});
-
-    thumbnail.image_url = uploadResult.url;
+    thumbnail.image_url = (uploadResult as any).url;
     thumbnail.isGenerating = false;
     await thumbnail.save();
 
-    res.json({message : "Thumbnail generated ", thumbnail });
-
-    // remove image file from disk
-    fs.unlinkSync(filePath)
+    res.json({message : "Thumbnail generated ", thumbnail })
 
 
   } catch (error: any) {

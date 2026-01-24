@@ -131,7 +131,7 @@ export const generateThumbnail = async (req: Request, res: Response) => {
       uploadStream.end(finalBuffer!);
     });
 
-    thumbnail.image_url = (uploadResult as any).url;
+    thumbnail.image_url = (uploadResult as any).secure_url;
     thumbnail.isGenerating = false;
     await thumbnail.save();
 

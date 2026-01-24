@@ -42,7 +42,8 @@ const MyGeneration = () => {
 
   const handleDownload = (image_url: string) => {
     const link = document.createElement('a');
-        link.href = image_url.replace('upload', '/upload/fl_attachment/')
+        link.href = image_url.replace('/upload/', '/upload/fl_attachment/');
+        link.download = `thumbnail-${Date.now()}.jpg`;
         document.body.appendChild(link);
         link.click();
         link.remove();

@@ -53,7 +53,7 @@ export default function TiltedImage({ rotateAmplitude = 3, }) {
         >
             <motion.div className="relative transform-3d w-full max-w-4xl" style={{ rotateX, rotateY }} >
                 <motion.img src="hero_img.png"
-                    className="broderb bg-linear-180 from-pink-500 to-transparent p-1 w-full rounded-[15px] will-change-transform transform-[translateZ(0)]"
+                    className="broderb bg-linear-180 from-red-500 to-transparent p-1 w-full rounded-[15px] will-change-transform transform-[translateZ(0)]"
                     alt="hero section showcase"
                 />
             </motion.div>

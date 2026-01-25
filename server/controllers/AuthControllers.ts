@@ -28,13 +28,21 @@ export const registerUser = async (req: Request, res: Response) => {
     req.session.isLoggedIn = true;
     req.session.userId = newUser._id;
 
-    return res.json({
-      message: "User registered successfully",
-      user: {
-        _id: newUser._id,
-        name: newUser.name,
-        email: newUser.email,
-      },
+    // Save session before sending response
+    req.session.save((err) => {
+      if (err) {
+        console.log(err);
+        return res.status(500).json({ message: "Session save failed" });
+      }
+      
+      return res.json({
+        message: "User registered successfully",
+        user: {
+          _id: newUser._id,
+          name: newUser.name,
+          email: newUser.email,
+        },
+      });
     });
   } catch (error: any) {
     console.log(error);
@@ -62,13 +70,21 @@ export const loginUser = async (req: Request, res: Response) => {
     req.session.isLoggedIn = true;
     req.session.userId = user._id;
 
-    return res.json({
-      message: "User Login successfully",
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-      },
+    // Save session before sending response
+    req.session.save((err) => {
+      if (err) {
+        console.log(err);
+        return res.status(500).json({ message: "Session save failed" });
+      }
+      
+      return res.json({
+        message: "User Login successfully",
+        user: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+        },
+      });
     });
   } catch (error: any) {
     console.log(error);

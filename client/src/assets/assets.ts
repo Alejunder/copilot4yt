@@ -1,10 +1,4 @@
-import thumb_1 from "./thumb_1.jpg";
-import thumb_2 from "./thumb_2.jpg";
-import thumb_3 from "./thumb_3.jpg";
-import thumb_4 from "./thumb_4.jpg";
-import thumb_5 from "./thumb_5.jpg";
-import thumb_6 from "./thumb_6.jpg";
-import thumb_7 from "./thumb_7.jpg";
+
 
 export const aspectRatios = ["16:9", "1:1", "9:16"];
 export type AspectRatio = (typeof aspectRatios)[number];
@@ -66,7 +60,7 @@ export const dummyThumbnails = [
         aspect_ratio: "16:9",
         color_scheme: "vibrant",
         text_overlay: true,
-        image_url: thumb_1,
+
         prompt_used: "add multiple smartwatches ",
         user_prompt: "add multiple smartwatches ",
         isGenerating: false,
@@ -82,7 +76,7 @@ export const dummyThumbnails = [
         aspect_ratio: "16:9",
         color_scheme: "vibrant",
         text_overlay: true,
-        image_url: thumb_2,
+
         prompt_used: "add cash images graph and etc",
         user_prompt: "add cash images graph and etc",
         isGenerating: false,
@@ -98,7 +92,7 @@ export const dummyThumbnails = [
         aspect_ratio: "16:9",
         color_scheme: "vibrant",
         text_overlay: true,
-        image_url: thumb_3,
+
         prompt_used: "add human with laptop",
         user_prompt: "add human with laptop",
         isGenerating: false,
@@ -114,7 +108,7 @@ export const dummyThumbnails = [
         aspect_ratio: "16:9",
         color_scheme: "vibrant",
         text_overlay: true,
-        image_url: thumb_4,
+
         prompt_used: "",
         user_prompt: "",
         isGenerating: false,
@@ -130,7 +124,7 @@ export const dummyThumbnails = [
         aspect_ratio: "1:1",
         color_scheme: "vibrant",
         text_overlay: true,
-        image_url: thumb_5,
+  
         isGenerating: false,
         createdAt: "2025-12-18T11:14:42.466Z",
         updatedAt: "2025-12-18T11:15:04.260Z",
@@ -144,7 +138,7 @@ export const dummyThumbnails = [
         aspect_ratio: "16:9",
         color_scheme: "vibrant",
         text_overlay: true,
-        image_url: thumb_6,
+  
         isGenerating: false,
         createdAt: "2025-12-18T11:06:52.555Z",
         updatedAt: "2025-12-18T11:07:18.715Z",
@@ -158,7 +152,7 @@ export const dummyThumbnails = [
         aspect_ratio: "16:9",
         color_scheme: "ocean",
         text_overlay: true,
-        image_url: thumb_7,
+
         isGenerating: false,
         createdAt: "2025-12-18T10:25:17.135Z",
         updatedAt: "2025-12-18T10:25:41.648Z",

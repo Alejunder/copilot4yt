@@ -19,17 +19,17 @@ export default function Navbar() {
                 transition={{ type: "spring", stiffness: 250, damping: 70, mass: 1 }}
             >
                 <Link to="/">
-                    <img src={logo} alt="logo" className="h-35 w-auto" />
+                    <img src={logo} alt="logo" className="h-24 w-auto" />
                 </Link>
 
                 <div className="hidden md:flex items-center gap-8 transition duration-500">
-                    <Link to="/" className="hover:text-pink-500 transition">Home</Link>
-                    <Link to="/generate" className="hover:text-pink-500 transition">Generate</Link>
+                    <Link to="/" className="hover:text-red-500 transition">Home</Link>
+                    <Link to="/generate" className="hover:text-red-500 transition">Generate</Link>
                     {
-                        isLoggedIn ?<Link to="/my-generation" className="hover:text-pink-500 transition">My Generations</Link>
-                        : <Link to="#" className="hover:text-pink-500 transition">About</Link>                     
+                        isLoggedIn ?<Link to="/my-generation" className="hover:text-red-500 transition">My Generations</Link>
+                        : <Link to="/about" className="hover:text-red-500 transition">About</Link>                     
                     }                  
-                    <Link to="#" className="hover:text-pink-500 transition">My Contact</Link>
+                    <Link to="/contact" className="hover:text-red-500 transition">My Contact</Link>
                 </div>
                 
                 <div className="flex items-center gap-2">
@@ -45,7 +45,7 @@ export default function Navbar() {
                             </div>
                         </div>                           
                     ) : (
-                        <button onClick={() => navigate('/login')} className="hidden md:block px-6 py-2.5 bg-pink-600 hover:bg-pink-700 active:scale-95 transition-all rounded-full">
+                        <button onClick={() => navigate('/login')} className="hidden md:block px-6 py-2.5 bg-red-600 hover:bg-red-700 active:scale-95 transition-all rounded-full">
                             Get Started
                         </button>
 
@@ -60,17 +60,17 @@ export default function Navbar() {
                 <Link to="/" onClick={() => setIsOpen(false)} >Home</Link>
                 <Link to="/generate" onClick={() => setIsOpen(false)} >Generate</Link>
                 { isLoggedIn ? <Link to="/my-generation" onClick={() => setIsOpen(false)} >My Generations</Link>
-                 : <Link to="#" onClick={() => setIsOpen(false)} >About</Link> 
+                 : <Link to="/about" onClick={() => setIsOpen(false)} >About</Link> 
                 }            
-                <Link to="#" onClick={() => setIsOpen(false)} >Contact us</Link>
+                <Link to="/contact" onClick={() => setIsOpen(false)} >Contact us</Link>
                 {isLoggedIn ? 
-                  <button onClick={() => setIsOpen(false)} className="active:ring-3 active: ring-white aspect-square size-10 p-1 items-center justify-center  hover:bg-pink-700 transition text-white rounded-md flex">
+                  <button onClick={() => setIsOpen(false)} className="active:ring-3 active: ring-white aspect-square size-10 p-1 items-center justify-center  hover:bg-red-700 transition text-white rounded-md flex">
                     Logout
                   </button>
                   :
                   <Link to="/login" onClick={() => setIsOpen(false)} >Login</Link>
                 }
-                <button onClick={() => setIsOpen(false)} className="active:ring-3 active:ring-white aspect-square size-10 p-1 items-center justify-center bg-pink-600 hover:bg-pink-700 transition text-white rounded-md flex">
+                <button onClick={() => setIsOpen(false)} className="active:ring-3 active:ring-white aspect-square size-10 p-1 items-center justify-center bg-red-600 hover:bg-red-700 transition text-white rounded-md flex">
                     <XIcon />
                 </button>
             </div>

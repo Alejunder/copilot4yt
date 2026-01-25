@@ -36,19 +36,26 @@ function Generate() {
     if (!title.trim()) return toast.error ("Title is required");
     setLoading (true);
 
-    const api_payload = {
-      title,
-      prompt: additionalDetails,
-      style,
-      aspect_ratio: aspectRatio,
-      color_scheme: colorSchemeId,
-      text_overlay: true,
-    };
+    try {
+      const api_payload = {
+        title,
+        prompt: additionalDetails,
+        style,
+        aspect_ratio: aspectRatio,
+        color_scheme: colorSchemeId,
+        text_overlay: true,
+      };
 
-    const {data} = await api.post('/api/thumbnail/generate', api_payload);
-    if(data.thumbnail){
-      navigate(`/generate/${data.thumbnail._id}`);
-      toast.success(data.message);
+      const {data} = await api.post('/api/thumbnail/generate', api_payload);
+      if(data.thumbnail){
+        navigate(`/generate/${data.thumbnail._id}`);
+        toast.success(data.message);
+      }
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.response?.data?.message || "Failed to generate thumbnail");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -106,7 +113,7 @@ function Generate() {
                   {/* Title input*/}
                   <div>
                     <label htmlFor='title' className='block text-sm font-medium text-zinc-100 mb-2'>Video Title</label>
-                    <input type='text' id='title' value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} placeholder='E.g., "Tips for Better Sleep"' className='w-full px-4 py-3 rounded-lg border border-white/12 bg-black/20 text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-pink-500' />
+                    <input type='text' id='title' value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} placeholder='E.g., "Tips for Better Sleep"' className='w-full px-4 py-3 rounded-lg border border-white/12 bg-black/20 text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-red-500' />
                     <div className='flex justify-end'>
                       <span className='text-xs text-zinc-400'>{title.length}/100</span>
                     </div>
@@ -121,12 +128,12 @@ function Generate() {
                   {/* Details*/}
                   <div>
                     <label htmlFor='details' className='block text-sm font-medium'>Additional Prompts<span className='text-zinc-400 text-xs'>(optional)</span></label>
-                    <textarea value={additionalDetails} onChange={(e) => setAdditionalDetails(e.target.value)} rows={3} placeholder= "Add any specific elements, mood, or style preferences..."className='w-full px-4 py-3 rounded-lg border border-white/10 bg-white/6 text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-pink-500 resize-none' />
+                    <textarea value={additionalDetails} onChange={(e) => setAdditionalDetails(e.target.value)} rows={3} placeholder= "Add any specific elements, mood, or style preferences..."className='w-full px-4 py-3 rounded-lg border border-white/10 bg-white/6 text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-red-500 resize-none' />
                   </div>
                 </div>
                 {/* Button*/}
                 {!id && (
-                  <button onClick = {handleGenerate} className='text-[15px] w-full py-3.5 rounded-xl font-medium bg-linear-to-b from-pink-500 to-pink-600 hover:from-pink-700 disabled: cursor-not-allowed transition-colors'>
+                  <button onClick = {handleGenerate} className='text-[15px] w-full py-3.5 rounded-xl font-medium bg-linear-to-b from-red-500 to-red-600 hover:from-red-700 disabled: cursor-not-allowed transition-colors'>
                     {loading ? 'Generating...' : 'Generate Thumbnail'}
                   </button>
                 )}

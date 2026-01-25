@@ -70,12 +70,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if(data.user){
                 setUser(data.user as IUser);
                 setIsLoggedIn(true);
+            } else {
+                setUser(null);
+                setIsLoggedIn(false);
             }
-            setUser(null);
-            setIsLoggedIn(false);
-            toast.success(data.message);
         } catch (error) {
             console.log(error);
+            setUser(null);
+            setIsLoggedIn(false);
         }
     }
 

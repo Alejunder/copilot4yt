@@ -1,8 +1,9 @@
 import { footerData } from "../data/footer";
-import { DribbbleIcon, LinkedinIcon, TwitterIcon, YoutubeIcon } from "lucide-react";
+import { Music2, LinkedinIcon, Disc3, Rocket } from "lucide-react";
 import { motion } from "motion/react";
 import type { IFooterLink } from "../types";
 import { Link } from "react-router-dom";
+import copilot4ytLogo from '../assets/copilot4yt.svg';
 
 export default function Footer() {
     return (
@@ -14,7 +15,7 @@ export default function Footer() {
                 transition={{ type: "spring", stiffness: 280, damping: 70, mass: 1 }}
             >
                 <Link to="/">
-                    <img className="size-8 aspect-square" src="/favicon.svg" alt="footer logo" width={32} height={32} />
+                    <img className="size-24 aspect-square" src={copilot4ytLogo} alt="footer logo" width={32} height={32} />
                 </Link>
                 {footerData.map((section, index) => (
                     <div key={index}>
@@ -22,7 +23,7 @@ export default function Footer() {
                         <ul className="mt-2 space-y-2">
                             {section.links.map((link: IFooterLink, index: number) => (
                                 <li key={index}>
-                                    <Link to={link.href} className="hover:text-pink-600 transition">
+                                    <Link to={link.href} className="hover:text-red-600 transition">
                                         {link.name}
                                     </Link>
                                 </li>
@@ -39,20 +40,20 @@ export default function Footer() {
             >
                 <p className="max-w-60">Making every customer feel valued—no matter the size of your audience.</p>
                 <div className="flex items-center gap-4 mt-3">
-                    <a href="https://dribbble.com/prebuiltui" target="_blank" rel="noreferrer">
-                        <DribbbleIcon className="size-5 hover:text-pink-500" />
+                    <a href="https://mood-beats-hub.vercel.app" target="_blank" rel="noreferrer">
+                        <Music2 className="size-5 hover:text-red-500" />
                     </a>
-                    <a href="https://www.linkedin.com/company/prebuiltui" target="_blank" rel="noreferrer">
-                        <LinkedinIcon className="size-5 hover:text-pink-500" />
+                    <a href="https://www.linkedin.com/in/alejandro-camayo-424850369/" target="_blank" rel="noreferrer">
+                        <LinkedinIcon className="size-5 hover:text-red-500" />
                     </a>
-                    <a href="https://x.com/prebuiltui" target="_blank" rel="noreferrer">
-                        <TwitterIcon className="size-5 hover:text-pink-500" />
+                    <a href="https://www.jaycamdj.com/" target="_blank" rel="noreferrer">
+                        <Disc3 className="size-5 hover:text-red-500" />
                     </a>
-                    <a href="https://www.youtube.com/@prebuiltui" target="_blank" rel="noreferrer">
-                        <YoutubeIcon className="size-6 hover:text-pink-500" />
+                    <a href="https://alecam.dev" target="_blank" rel="noreferrer">
+                        <Rocket className="size-6 hover:text-red-500" />
                     </a>
                 </div>
-                <p className="mt-3 text-center">&copy; {new Date().getFullYear()} <a href="https://prebuiltui.com?utm_source=pixels">Copilot4YT - AleCam </a></p>
+                <p className="mt-3 text-center">&copy; {new Date().getFullYear()} <a href="https://alecam.dev">Copilot4YT - AleCam </a></p>
             </motion.div>
         </footer>
     );

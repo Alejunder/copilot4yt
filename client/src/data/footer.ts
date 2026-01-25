@@ -4,20 +4,17 @@ export const footerData: IFooter[] = [
     {
         title: "Product",
         links: [
-            { name: "Home", href: "#" },
-            { name: "Support", href: "#support" },
+            { name: "Contact", href: "/contact" },
             { name: "Pricing", href: "#pricing" },
-            { name: "Affiliate", href: "#affiliate" },
+
         ]
     },
     {
         title: "Resources",
         links: [
-            { name: "Company", href: "#company" },
-            { name: "Blogs", href: "#blogs" },
-            { name: "Community", href: "#community" },
-            { name: "Careers", href: "#careers" },
-            { name: "About", href: "#about" },
+            { name: "Portfolio", href: "https://alecam.dev" },
+            { name: "MoodBeats Hub", href: "https://mood-beats-hub.vercel.app" },
+            { name: "About", href: "/about" },
         ]
     },
     {

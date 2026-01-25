@@ -4,7 +4,7 @@ import { motion } from "motion/react";
 export default function SectionTitle({ text1, text2, text3 }: SectionTitleProps) {
     return (
         <>
-            <motion.p className="text-center font-medium text-pink-600 mt-28 px-10 py-2 rounded-full bg-pink-950/70 border border-pink-800 w-max mx-auto"
+            <motion.p className="text-center font-medium text-red-600 mt-28 px-10 py-2 rounded-full bg-red-950/70 border border-red-800 w-max mx-auto"
                 initial={{ y: 120, opacity: 0 }}
                 whileInView={{ y: 0, opacity: 1 }}
                 viewport={{ once: true }}

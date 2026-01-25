@@ -5,6 +5,8 @@ import Footer from "./components/Footer";
 import "./globals.css";
 import LenisScroll from "./components/LenisScroll";
 import Generate from "./pages/Generate";
+import About from "./pages/About";
+import MyContact from "./pages/MyContact";
 import MyGeneration from "./pages/MyGeneration";
 import YtPreview from "./pages/YtPreview";
 import Login from "./components/Login";
@@ -28,6 +30,8 @@ export default function App() {
                 <Route path="/generate" element={<Generate />} />
                 <Route path="/generate/:id" element={<Generate />} />
                 <Route path="/my-generation" element={<MyGeneration />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/contact" element={<MyContact />} />
                 <Route path="/preview" element={<YtPreview />} />
                 <Route path="/login" element={<Login />} />
             </Routes>

@@ -46,6 +46,9 @@ export const generateThumbnail = async (req: Request, res: Response) => {
       text_overlay,
     } = req.body;
 
+    // Get the uploaded file from multer
+    const referenceImage = (req as any).file;
+
     const thumbnail = await Thumbnail.create({
       userId,
       title,
@@ -98,10 +101,36 @@ export const generateThumbnail = async (req: Request, res: Response) => {
 
     prompt += ` The thumbnail should be ${aspect_ratio}, visually stunning, and designed to maximize click-through rate. Make it bold, professional, and impossible to ignore.`;
 
+    // Prepare content parts for AI model
+    const contentParts: any[] = [];
+    
+    // If reference image is provided, add it to the content
+    if (referenceImage && referenceImage.buffer) {
+      prompt = `Using the reference image provided as inspiration, create a ${stylePrompts[style as keyof typeof stylePrompts]} for: "${title}". Use similar composition, style elements, or visual themes from the reference image.`;
+      
+      if (color_scheme) {
+        prompt += ` Use a ${colorSchemeDescriptions[color_scheme as keyof typeof colorSchemeDescriptions]} color scheme.`;
+      }
+      if (user_prompt) {
+        prompt += ` Additional details: ${user_prompt}`;
+      }
+      
+      prompt += ` The thumbnail should be ${aspect_ratio}, visually stunning, and designed to maximize click-through rate. Make it bold, professional, and impossible to ignore.`;
+      
+      contentParts.push({
+        inlineData: {
+          mimeType: referenceImage.mimetype,
+          data: referenceImage.buffer.toString('base64'),
+        },
+      });
+    }
+    
+    contentParts.push({ text: prompt });
+
     // Generate the image using the ai model
     const response: any = await ai.models.generateContent({
       model: mode,
-      contents: [prompt],
+      contents: [{ role: 'user', parts: contentParts }],
       config: generationConfig,
     }); 
 

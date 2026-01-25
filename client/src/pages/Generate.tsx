@@ -6,6 +6,8 @@ import AspectRatioSelector from '../components/AspectRatioSelector'
 import StyleSelector from '../components/StyleSelector'
 import ColorSchemeSelector from '../components/ColorSchemeSelector'
 import PreviewPanel from '../components/PreviewPanel'
+import ImageUploader from '../components/ImageUploader'
+import PrivacyWarningModal from '../components/PrivacyWarningModal'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
 import { type AspectRatio} from '../assets/assets'
@@ -21,6 +23,7 @@ function Generate() {
 
   const [title, setTitle] = useState("")
   const [additionalDetails, setAdditionalDetails] = useState("")
+  const [referenceImage, setReferenceImage] = useState<File | null>(null)
 
   const [thumbnail, setThumbnail] = useState<IThumbnail | null>(null)
   const [loading, setLoading] = useState(false)
@@ -30,23 +33,43 @@ function Generate() {
   const [style, setStyle] = useState<ThumbnailStyle>("Bold & Graphic")
 
   const [styleDropdownOpen, setStyleDropdownOpen] = useState(false)
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false)
 
-  const handleGenerate = async () => {
+  const handleGenerateClick = () => {
     if (!isLoggedIn) return toast.error ("Please login to generate thumbnails");
     if (!title.trim()) return toast.error ("Title is required");
+    
+    // If there's a reference image, show privacy warning first
+    if (referenceImage) {
+      setShowPrivacyModal(true);
+    } else {
+      handleGenerate();
+    }
+  };
+
+  const handleGenerate = async () => {
+    setShowPrivacyModal(false);
     setLoading (true);
 
     try {
-      const api_payload = {
-        title,
-        prompt: additionalDetails,
-        style,
-        aspect_ratio: aspectRatio,
-        color_scheme: colorSchemeId,
-        text_overlay: true,
-      };
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('prompt', additionalDetails);
+      formData.append('style', style);
+      formData.append('aspect_ratio', aspectRatio);
+      formData.append('color_scheme', colorSchemeId);
+      formData.append('text_overlay', 'true');
+      
+      if (referenceImage) {
+        formData.append('reference_image', referenceImage);
+      }
 
-      const {data} = await api.post('/api/thumbnail/generate', api_payload);
+      const {data} = await api.post('/api/thumbnail/generate', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
       if(data.thumbnail){
         navigate(`/generate/${data.thumbnail._id}`);
         toast.success(data.message);
@@ -92,6 +115,7 @@ function Generate() {
   useEffect(() => {
   if(!id && thumbnail){
     setThumbnail(null);
+    setReferenceImage(null);
   }
   }, [pathname])
 
@@ -124,8 +148,10 @@ function Generate() {
                   <StyleSelector value={style} onChange={setStyle} isOpen={styleDropdownOpen} setIsOpen={setStyleDropdownOpen} />
                   {/* ColorSchemeSelector*/}
                   <ColorSchemeSelector value={colorSchemeId} onChange={setColorSchemeId} />
+                 
+                  {/* Image uploader*/}
+                  <ImageUploader onImageSelect={setReferenceImage} disabled={loading} />
 
-                  {/* Details*/}
                   <div>
                     <label htmlFor='details' className='block text-sm font-medium'>Additional Prompts<span className='text-zinc-400 text-xs'>(optional)</span></label>
                     <textarea value={additionalDetails} onChange={(e) => setAdditionalDetails(e.target.value)} rows={3} placeholder= "Add any specific elements, mood, or style preferences..."className='w-full px-4 py-3 rounded-lg border border-white/10 bg-white/6 text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-red-500 resize-none' />
@@ -133,7 +159,7 @@ function Generate() {
                 </div>
                 {/* Button*/}
                 {!id && (
-                  <button onClick = {handleGenerate} className='text-[15px] w-full py-3.5 rounded-xl font-medium bg-linear-to-b from-red-500 to-red-600 hover:from-red-700 disabled: cursor-not-allowed transition-colors'>
+                  <button onClick = {handleGenerateClick} disabled={loading} className='text-[15px] w-full py-3.5 rounded-xl font-medium bg-linear-to-b from-red-500 to-red-600 hover:from-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'>
                     {loading ? 'Generating...' : 'Generate Thumbnail'}
                   </button>
                 )}
@@ -152,6 +178,12 @@ function Generate() {
         </main>
       </div>
 
+      {/* Privacy Warning Modal */}
+      <PrivacyWarningModal
+        isOpen={showPrivacyModal}
+        onClose={() => setShowPrivacyModal(false)}
+        onConfirm={handleGenerate}
+      />
     </>
   )
 }

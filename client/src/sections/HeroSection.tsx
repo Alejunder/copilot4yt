@@ -64,7 +64,7 @@ export default function HeroSection() {
                 <button onClick={() => navigate('/generate')} className="bg-red-600 hover:bg-red-700 text-white rounded-full px-7 h-11">
                     Generate now
                 </button>
-                <button onClick={() => navigate ('/contact')} className="flex items-center gap-2 border border-red-900 hover:bg-red-950/50 transition rounded-full px-6 h-11">
+                <button onClick={() => window.location.href = 'https://alecam.dev'} className="flex items-center gap-2 border border-red-900 hover:bg-red-950/50 transition rounded-full px-6 h-11">
                     <BriefcaseBusiness strokeWidth={1} />
                     <span>See how I work</span>
                 </button>

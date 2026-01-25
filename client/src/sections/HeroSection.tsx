@@ -17,17 +17,17 @@ export default function HeroSection() {
     return (
         <div className="relative flex flex-col items-center justify-center px-4 md:px-16 lg:px-24 xl:px-32">
             <div className="absolute top-30 -z-10 left-1/4 size-72 bg-red-600 blur-[300px]"></div>
-            <motion.a href="/generate" className="group flex items-center gap-2 rounded-full p-1 pr-3 mt-44 text-red-100 bg-red-200/15"
+            <motion.a href="/login" className="group flex items-center gap-2 rounded-full p-1 pr-3 mt-44 text-red-100 bg-red-200/15"
                 initial={{ y: -20, opacity: 0 }}
                 whileInView={{ y: 0, opacity: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.2, type: "spring", stiffness: 320, damping: 70, mass: 1 }}
             >
-                <span className="bg-red-800 text-white text-xs px-3.5 py-1 rounded-full">
-                    NEW
+                <span className="bg-red-800 text-white text-md px-3.5 py-1 rounded-full">
+                    Login
                 </span>
                 <p className="flex items-center gap-1">
-                    <span> first thumbnail for free </span>
+                    <span> for your first thumbnail for free </span>
                     <ChevronRightIcon size={16} className="group-hover:translate-x-0.5 transition duration-300" />
                 </p>
             </motion.a>

@@ -38,8 +38,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 setIsLoggedIn(true);
             }
             toast.success(data.message);
-        } catch (error) {
+        } catch (error: any) {
             console.log(error);
+            const errorMessage = error.response?.data?.message || "Error al registrar. Por favor intenta de nuevo.";
+            toast.error(errorMessage);
         }
     }
     const login = async ({ email, password }: { email: string, password: string }) => {
@@ -50,8 +52,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 setIsLoggedIn(true);
             }
             toast.success(data.message);
-        } catch (error) {
+        } catch (error: any) {
             console.log(error);
+            const errorMessage = error.response?.data?.message || "Error al iniciar sesión. Verifica tus credenciales.";
+            toast.error(errorMessage);
         }
     }
     const logout = async () => {
@@ -60,8 +64,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setUser(null);
             setIsLoggedIn(false);
             toast.success(data.message);
-        } catch (error) {
+        } catch (error: any) {
             console.log(error);
+            const errorMessage = error.response?.data?.message || "Error al cerrar sesión.";
+            toast.error(errorMessage);
         }
     }
     const fetchUser = async () => {

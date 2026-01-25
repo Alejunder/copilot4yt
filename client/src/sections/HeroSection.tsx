@@ -3,11 +3,13 @@ import { CheckIcon, ChevronRightIcon, BriefcaseBusiness } from "lucide-react";
 import TiltedImage from "../components/TiltImage";
 import { motion } from "motion/react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import heroImage from "../assets/copilotheader.jpg";
 
 export default function HeroSection() {
 
     const navigate = useNavigate();
+    const { isLoggedIn } = useAuth();
     const specialFeatures = [
         "No deasign skills needed",
         "Fast generation",
@@ -17,14 +19,16 @@ export default function HeroSection() {
     return (
         <div className="relative flex flex-col items-center justify-center px-4 md:px-16 lg:px-24 xl:px-32">
             <div className="absolute top-30 -z-10 left-1/4 size-72 bg-red-600 blur-[300px]"></div>
-            <motion.a href="/login" className="group flex items-center gap-2 rounded-full p-1 pr-3 mt-44 text-red-100 bg-red-200/15"
+           <motion.a 
+                href={isLoggedIn ? "/generate" : "/login"} 
+                className="group flex items-center gap-2 rounded-full p-1 pr-3 mt-44 text-red-100 bg-red-200/15"
                 initial={{ y: -20, opacity: 0 }}
                 whileInView={{ y: 0, opacity: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.2, type: "spring", stiffness: 320, damping: 70, mass: 1 }}
             >
                 <span className="bg-red-800 text-white text-md px-3.5 py-1 rounded-full">
-                    Login
+                    {isLoggedIn ? "Click" : "Login"}
                 </span>
                 <p className="flex items-center gap-1">
                     <span> for your first thumbnail for free </span>

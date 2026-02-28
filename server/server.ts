@@ -1,5 +1,4 @@
 import express, { Request, Response, NextFunction } from 'express';
-import cors from 'cors';
 import 'dotenv/config';
 import connectDB from './configs/db.js';
 import session from 'express-session';
@@ -43,35 +42,13 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     res.setHeader('Access-Control-Expose-Headers', 'Set-Cookie');
     res.setHeader('Access-Control-Max-Age', '86400');
     
-    // Handle preflight OPTIONS request
+    // Handle preflight OPTIONS request immediately
     if (req.method === 'OPTIONS') {
-        res.status(200).end();
-        return;
+        return res.status(200).end();
     }
     
     next();
 });
-
-// Apply cors middleware as backup (belt and suspenders approach)
-app.use(cors({
-    origin: function (origin, callback) {
-        // Allow requests with no origin (mobile apps, Postman, etc.)
-        if (!origin) return callback(null, true);
-        
-        if (allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With'],
-    exposedHeaders: ['Set-Cookie'],
-    maxAge: 86400,
-    preflightContinue: false,
-    optionsSuccessStatus: 204
-}));
 
 app.use(express.json());
 

@@ -35,9 +35,28 @@ function Generate() {
   const [styleDropdownOpen, setStyleDropdownOpen] = useState(false)
   const [showPrivacyModal, setShowPrivacyModal] = useState(false)
 
-  const handleGenerateClick = () => {
-    if (!isLoggedIn) return toast.error ("Please login to generate thumbnails");
-    if (!title.trim()) return toast.error ("Title is required");
+  const handleGenerateClick = async () => {
+    if (!isLoggedIn) {
+      toast.error("Please login to generate thumbnails");
+      return;
+    }
+    
+    if (!title.trim()) {
+      toast.error("Title is required");
+      return;
+    }
+    
+    // Critical fix for iOS Safari: Verify session before making protected request
+    try {
+      const { data } = await api.get('/api/auth/verify');
+      if (!data.user) {
+        toast.error("Your session has expired. Please log in again.");
+        return;
+      }
+    } catch (error) {
+      toast.error("Please log in to continue");
+      return;
+    }
     
     // If there's a reference image, show privacy warning first
     if (referenceImage) {

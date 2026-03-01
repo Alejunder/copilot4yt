@@ -15,7 +15,8 @@ declare module 'express-session' {
     }
 }
 
-await connectDB();
+// Connect to DB once on cold start; do not crash the module if it fails
+connectDB().catch((err) => console.error('MongoDB connection error:', err));
 
 const app = express();
 

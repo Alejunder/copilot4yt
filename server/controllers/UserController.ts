@@ -31,17 +31,3 @@ export const getThumbnailById = async (req: Request, res: Response) => {
         res.status(500).json({ error: error.message });
     }
 };
-
-
-        const thumbnail =  await Thumbnail.findOne({ userId, _id: id });
-        
-        if (!thumbnail) {
-            return res.status(404).json({ message: 'Thumbnail not found' });
-        }
-        
-        res.json({ thumbnail });
-    } catch (error: any) {
-        console.log(error);
-        res.status(500).json({ error: error.message });
-    }
-};

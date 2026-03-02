@@ -98,10 +98,13 @@ export const logoutUser = async (req: Request, res: Response) => {
         if (error) {
             console.log(error);
             return res.status(500).json({ message: "Logout failed" });
-        }   
-    })
-    return res.json({ message: "User logged out successfully" });
-  }    
+        }
+        // Clear the session cookie explicitly so the browser removes it immediately.
+        // The cookie name 'connect.sid' is express-session's default.
+        res.clearCookie('connect.sid', { path: '/' });
+        return res.json({ message: "User logged out successfully" });
+    });
+}
 
  //Controllers for user verify 
 export const verifyUser = async (req: Request, res: Response) => {

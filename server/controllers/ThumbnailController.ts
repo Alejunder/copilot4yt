@@ -1,26 +1,21 @@
 import { Request, Response } from "express";
 import Thumbnail from "../models/Thumbnail.js";
-import {
-  GenerateContentConfig,
-  HarmBlockThreshold,
-  HarmCategory,
-} from "@google/genai";
-import ai from "../configs/ai.js";
-import path from "path";
-import fs from 'fs';
 import { v2 as cloudinary } from "cloudinary";
+
+const GEMINI_MODEL = "gemini-3.1-flash-image-preview";
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 const stylePrompts: Record<string, string> = {
   "Bold & Graphic":
-    "eye-catching thumbnail, bold typography, vibrant colors, expressive facial reaction, dramatic lighting, high contrast, click-worthy composition, professional style",
+    "eye-catching YouTube thumbnail, bold large typography text overlay, vibrant saturated colors, dramatic studio lighting, high contrast composition, dynamic diagonal layout, click-worthy visual hierarchy, professional graphic design",
   "Tech/Futuristic":
-    "futuristic thumbnail, sleek modern design, digital UI elements, glowing accents, holographic effects, cyber-tech aesthetic, sharp lighting, high-tech atmosphere",
+    "futuristic YouTube thumbnail, sleek modern graphic design, digital HUD interface elements, glowing neon accents, holographic effects, cyber-tech geometric patterns, sharp dramatic lighting, high-tech dark atmosphere",
   "Minimalist":
-    "minimalist thumbnail, clean layout, simple shapes, limited color palette, plenty of negative space, modern flat design, clear focal point",
+    "minimalist YouTube thumbnail, clean uncluttered layout, simple bold geometric shapes, limited two-tone color palette, plenty of negative space, modern flat design, single clear focal point, elegant typography",
   "Photorealistic":
-    "photorealistic thumbnail, ultra-realistic lighting, natural skin tones, candid moment, DSLR-style photography, lifestyle realism, shallow depth of field",
+    "photorealistic YouTube thumbnail, ultra-realistic product or scene photography, DSLR camera aesthetic, studio professional lighting, shallow depth of field bokeh, sharp subject focus, commercial photography quality",
   "Illustrated":
-    "illustrated thumbnail, custom digital illustration, stylized characters, bold outlines, vibrant colors, creative cartoon or vector art style",
+    "illustrated YouTube thumbnail, custom digital artwork, bold graphic illustration style, vibrant flat colors, strong outlines, creative vector art composition, stylized non-realistic design",
 };
 
 const colorSchemeDescriptions = {
@@ -61,91 +56,86 @@ export const generateThumbnail = async (req: Request, res: Response) => {
       isGenerating: true,
     });
 
-    const mode = "gemini-3-pro-image-preview";
-    const generationConfig: GenerateContentConfig = {
-      maxOutputTokens: 32768,
-      temperature: 1,
-      topP: 0.95,
-      responseModalities: ["IMAGE"],
-      imageConfig: {
-        aspectRatio: aspect_ratio || "16:9",
-        imageSize: "1K",
-      },
-      safetySettings: [
-        {
-          category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-          threshold: HarmBlockThreshold.OFF,
-        },
-        {
-          category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-          threshold: HarmBlockThreshold.OFF,
-        },
-        {
-          category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-          threshold: HarmBlockThreshold.OFF,
-        },
-        {
-          category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-          threshold: HarmBlockThreshold.OFF,
-        },
-      ],
-    };
+    // gemini-3.1-flash-image-preview: supports responseModalities + imageConfig.
+    // We call the REST API directly with fetch instead of the @google/genai SDK because
+    // the SDK maps GenerateContentConfig incorrectly for image generation models,
+    // consistently producing IMAGE_OTHER / NO_IMAGE despite the REST API working fine.
 
+    // Build the prompt
     let prompt = `Create a ${stylePrompts[style as keyof typeof stylePrompts]} for: "${title}"`;
     if (color_scheme) {
-        prompt += ` Use a ${colorSchemeDescriptions[color_scheme as keyof typeof colorSchemeDescriptions]} color scheme.`;
+      prompt += ` Use a ${colorSchemeDescriptions[color_scheme as keyof typeof colorSchemeDescriptions]} color scheme.`;
     }
     if (user_prompt) {
-        prompt += ` Additional details: ${user_prompt}`;
+      prompt += ` Additional details: ${user_prompt}`;
     }
-
     prompt += ` The thumbnail should be ${aspect_ratio}, visually stunning, and designed to maximize click-through rate. Make it bold, professional, and impossible to ignore.`;
 
-    // Prepare content parts for AI model
+    // Build content parts (text + optional reference image)
     const contentParts: any[] = [];
-    
-    // If reference image is provided, add it to the content
     if (referenceImage && referenceImage.buffer) {
       prompt = `Using the reference image provided as inspiration, create a ${stylePrompts[style as keyof typeof stylePrompts]} for: "${title}". Use similar composition, style elements, or visual themes from the reference image.`;
-      
       if (color_scheme) {
         prompt += ` Use a ${colorSchemeDescriptions[color_scheme as keyof typeof colorSchemeDescriptions]} color scheme.`;
       }
       if (user_prompt) {
         prompt += ` Additional details: ${user_prompt}`;
       }
-      
       prompt += ` The thumbnail should be ${aspect_ratio}, visually stunning, and designed to maximize click-through rate. Make it bold, professional, and impossible to ignore.`;
-      
       contentParts.push({
         inlineData: {
           mimeType: referenceImage.mimetype,
-          data: referenceImage.buffer.toString('base64'),
+          data: referenceImage.buffer.toString("base64"),
         },
       });
     }
-    
     contentParts.push({ text: prompt });
 
-    // Generate the image using the ai model
-    const response: any = await ai.models.generateContent({
-      model: mode,
-      contents: [{ role: 'user', parts: contentParts }],
-      config: generationConfig,
-    }); 
+    const geminiRequestBody = {
+      contents: [{ role: "user", parts: contentParts }],
+      generationConfig: {
+        responseModalities: ["IMAGE"],
+        imageConfig: {
+          aspectRatio: aspect_ratio || "16:9",
+        },
+      },
+    };
+
+    const apiKey = process.env.GEMINI_API_KEY || '';
+    console.log('[Gemini] prompt:', contentParts.find((p:any)=>p.text)?.text);
+
+    const geminiResponse = await fetch(
+      `${GEMINI_API_URL}?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(geminiRequestBody),
+      }
+    );
+
+    const response: any = await geminiResponse.json();
 
     // Check if the response is valid
-    if (!response?.candidates?.[0]?.content.parts){
-        throw new Error("Unexpected response");
+    if (!response?.candidates?.[0]?.content?.parts) {
+        console.error('Gemini raw response:', JSON.stringify(response, null, 2));
+        const reason = response?.candidates?.[0]?.finishReason || response?.error?.message || "unknown";
+        throw new Error(`Gemini returned no content parts (reason: ${reason})`);
     }
 
     const parts = response.candidates[0].content.parts;
 
     let finalBuffer: Buffer | null = null;
     for (const part of parts) {
-      if (part.inlineData) {
+      // Skip thought parts (present in thinking models like gemini-3-pro-image-preview)
+      if (part.thought) continue;
+      if (part.inlineData?.data) {
         finalBuffer = Buffer.from(part.inlineData.data, "base64");
       }
+    }
+
+    if (!finalBuffer) {
+        console.error('Parts received:', JSON.stringify(parts.map((p: any) => ({ hasInlineData: !!p.inlineData, hasText: !!p.text, thought: !!p.thought })), null, 2));
+        throw new Error("Gemini returned no image in response");
     }
 
     // Upload directly to Cloudinary from buffer (Vercel-compatible)

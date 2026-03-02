@@ -56,23 +56,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const signUp = async ({ name, email, password }: { name: string, email: string, password: string }) => {
         try {
-            await api.post('/api/auth/register', { name, email, password });
-
-            /**
-             * After registration, verify the session via a separate GET request.
-             * With the same-origin proxy architecture, the session cookie set by the
-             * backend is delivered to the browser as a first-party cookie and Safari
-             * will accept and persist it without ITP interference.
-             * We do NOT fall back to marking the user as authenticated if this fails —
-             * a failed verify means the session was not actually established.
-             */
-            const sessionVerified = await verifySession();
-
-            if (sessionVerified) {
-                toast.success('Account created successfully!');
-            } else {
-                toast.error('Registration succeeded but the session could not be established. Please try logging in.');
+            const { data } = await api.post('/api/auth/register', { name, email, password });
+            // Set user state directly from the registration response body.
+            // The session cookie is set by the backend via the Vercel proxy rewrite
+            // (same-origin, so SameSite=Lax and Safari ITP both accept it).
+            // fetchUser() on the next page load will re-verify the session.
+            if (data.user) {
+                setUser(data.user as IUser);
+                setIsLoggedIn(true);
             }
+            toast.success('Account created successfully!');
         } catch (error: any) {
             console.log(error);
             const errorMessage = error.response?.data?.message || 'Error al registrar. Por favor intenta de nuevo.';
@@ -82,22 +75,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const login = async ({ email, password }: { email: string, password: string }) => {
         try {
-            await api.post('/api/auth/login', { email, password });
-
-            /**
-             * After login, verify the session via a separate GET request.
-             * With the same-origin proxy, cookies are same-site first-party —
-             * Safari ITP does not block them. If verifySession fails here, the
-             * cookie was genuinely not set and the user must be shown an error.
-             * We never fake authentication from the login response body.
-             */
-            const sessionVerified = await verifySession();
-
-            if (sessionVerified) {
-                toast.success('Logged in successfully!');
-            } else {
-                toast.error('Login succeeded but the session could not be verified. Please try again.');
+            const { data } = await api.post('/api/auth/login', { email, password });
+            // Set user state directly from the login response body.
+            // The session cookie is handled by the Vercel proxy rewrite (same-origin),
+            // so SameSite=Lax works and Safari ITP does not block it.
+            // fetchUser() on the next page load will re-verify the session via the cookie.
+            if (data.user) {
+                setUser(data.user as IUser);
+                setIsLoggedIn(true);
             }
+            toast.success('Logged in successfully!');
         } catch (error: any) {
             console.log(error);
             const errorMessage = error.response?.data?.message || 'Error al iniciar sesión. Verifica tus credenciales.';

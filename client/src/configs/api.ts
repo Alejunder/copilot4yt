@@ -10,9 +10,11 @@ import axios from 'axios';
  * so requests go directly to the local backend server.
  */
 const api = axios.create({
-  // Production → empty string = same-origin (Vercel proxy handles routing to backend)
-  // Development → http://localhost:3000 (set via VITE_BASE_URL in .env.local)
-  baseURL: import.meta.env.VITE_BASE_URL || '',
+  // In production, ALWAYS use '' (same-origin) so the Vercel rewrite proxy is used.
+  // This ignores any VITE_BASE_URL env var that might still be set in Vercel's dashboard,
+  // which would otherwise bypass the proxy and break SameSite=Lax cookies on mobile.
+  // In development, use VITE_BASE_URL if set, otherwise '' to use the Vite proxy.
+  baseURL: import.meta.env.PROD ? '' : (import.meta.env.VITE_BASE_URL || ''),
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',

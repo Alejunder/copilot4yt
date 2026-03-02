@@ -6,8 +6,7 @@ const AuthRouter = express.Router();
 
 AuthRouter.post("/register", registerUser);
 AuthRouter.post("/login", loginUser);
-AuthRouter.post("/protect", protect, verifyUser);
-AuthRouter.post("/logout", protect, logoutUser);
-AuthRouter.get('/verify', protect, verifyUser); 
+AuthRouter.post("/logout", logoutUser);       // JWT logout is client-side; no protect needed
+AuthRouter.get('/verify', protect, verifyUser);  // validates the JWT and returns user data
 
 export default AuthRouter;

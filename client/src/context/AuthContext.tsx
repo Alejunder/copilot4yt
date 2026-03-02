@@ -30,37 +30,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [user,setUser] = useState<IUser | null>(null);
     const [isLoggedIn,setIsLoggedIn] = useState<boolean>(false);
 
-    /**
-     * Verifies that the session cookie was accepted by the browser and is
-     * being sent back to the server correctly.
-     *
-     * With the same-origin proxy architecture (Vercel rewrite /api/* → backend),
-     * the session cookie is a first-party cookie on this origin. Safari's ITP
-     * does not block first-party cookies, so a single request is sufficient —
-     * no artificial retries or delays are needed.
-     */
     const verifySession = async (): Promise<boolean> => {
-        try {
-            const { data } = await api.get('/api/auth/verify');
-            if (data.user) {
-                setUser(data.user as IUser);
-                setIsLoggedIn(true);
-                return true;
-            }
-            return false;
-        } catch (error) {
-            console.error('Session verification failed:', error);
-            return false;
-        }
+        // Legacy helper — not called in current flows. fetchUser() handles session restoration.
+        return false;
     };
 
     const signUp = async ({ name, email, password }: { name: string, email: string, password: string }) => {
         try {
             const { data } = await api.post('/api/auth/register', { name, email, password });
-            // Set user state directly from the registration response body.
-            // The session cookie is set by the backend via the Vercel proxy rewrite
-            // (same-origin, so SameSite=Lax and Safari ITP both accept it).
-            // fetchUser() on the next page load will re-verify the session.
+            if (data.token) {
+                localStorage.setItem('token', data.token);
+            }
             if (data.user) {
                 setUser(data.user as IUser);
                 setIsLoggedIn(true);
@@ -76,10 +56,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const login = async ({ email, password }: { email: string, password: string }) => {
         try {
             const { data } = await api.post('/api/auth/login', { email, password });
-            // Set user state directly from the login response body.
-            // The session cookie is handled by the Vercel proxy rewrite (same-origin),
-            // so SameSite=Lax works and Safari ITP does not block it.
-            // fetchUser() on the next page load will re-verify the session via the cookie.
+            if (data.token) {
+                localStorage.setItem('token', data.token);
+            }
             if (data.user) {
                 setUser(data.user as IUser);
                 setIsLoggedIn(true);
@@ -92,29 +71,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }
     const logout = async () => {
-        try {
-            const{data} = await api.post('/api/auth/logout');
-            setUser(null);
-            setIsLoggedIn(false);
-            toast.success(data.message);
-        } catch (error: any) {
-            console.log(error);
-            const errorMessage = error.response?.data?.message || "Error al cerrar sesión.";
-            toast.error(errorMessage);
-        }
+        // JWT logout is client-side: remove the token from localStorage.
+        // Optionally call the server to log the event, but it's not required.
+        localStorage.removeItem('token');
+        setUser(null);
+        setIsLoggedIn(false);
+        toast.success('Logged out successfully');
     }
     const fetchUser = async () => {
+        // No token → not logged in. Skip the network call entirely.
+        const token = localStorage.getItem('token');
+        if (!token) {
+            setUser(null);
+            setIsLoggedIn(false);
+            return;
+        }
         try {
-            const{data} = await api.get('/api/auth/verify');
-            if(data.user){
+            const { data } = await api.get('/api/auth/verify');
+            if (data.user) {
                 setUser(data.user as IUser);
                 setIsLoggedIn(true);
             } else {
+                localStorage.removeItem('token');
                 setUser(null);
                 setIsLoggedIn(false);
             }
         } catch (error) {
-            console.log(error);
+            // Token is invalid or expired
+            localStorage.removeItem('token');
             setUser(null);
             setIsLoggedIn(false);
         }

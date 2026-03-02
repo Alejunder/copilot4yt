@@ -1,42 +1,41 @@
 import axios from 'axios';
 
 /**
- * Architecture note — same-origin proxy:
- * In production, all /api/* requests go to the same origin (this Vercel deployment).
- * Vercel's vercel.json rewrites them transparently to the backend service.
- * This makes all cookies first-party (same-site), bypassing Safari ITP entirely.
+ * Auth strategy: JWT stored in localStorage, sent as Authorization: Bearer <token>.
+ * This completely bypasses all cookie/SameSite/ITP/proxy issues on iOS Safari and
+ * any other browser. The Authorization header is forwarded transparently by Vercel's
+ * rewrite proxy, unlike Set-Cookie/Cookie headers which can be stripped.
  *
- * In development, VITE_BASE_URL is set in .env.local to http://localhost:3000
- * so requests go directly to the local backend server.
+ * baseURL is '' in production (same-origin, Vercel rewrite handles routing to backend).
+ * In development, the Vite proxy handles /api/* → http://localhost:3000.
  */
 const api = axios.create({
-  // In production, ALWAYS use '' (same-origin) so the Vercel rewrite proxy is used.
-  // This ignores any VITE_BASE_URL env var that might still be set in Vercel's dashboard,
-  // which would otherwise bypass the proxy and break SameSite=Lax cookies on mobile.
-  // In development, use VITE_BASE_URL if set, otherwise '' to use the Vite proxy.
   baseURL: import.meta.env.PROD ? '' : (import.meta.env.VITE_BASE_URL || ''),
-  withCredentials: true,
+  withCredentials: false,  // No cookies needed — auth is via Authorization header
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Response interceptor to handle authentication errors globally
+// Request interceptor: attach JWT from localStorage to every request
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers['Authorization'] = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Response interceptor: handle authentication errors globally
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // If we get a 401, the session is invalid
     if (error.response?.status === 401) {
-      const errorMessage = error.response?.data?.message || 'Session expired';
-      
-      // Only show the error if it's not a verify endpoint
-      // (verify is used to check session status, so 401 is expected when logged out)
+      // Token is invalid or expired — clear it and notify AuthContext
       if (!error.config?.url?.includes('/api/auth/verify')) {
-        console.error('Authentication error:', errorMessage);
-        
-        // Dispatch custom event that AuthContext can listen to
-        window.dispatchEvent(new CustomEvent('auth-error', { 
-          detail: { message: errorMessage } 
+        localStorage.removeItem('token');
+        window.dispatchEvent(new CustomEvent('auth-error', {
+          detail: { message: error.response?.data?.message || 'Session expired' }
         }));
       }
     }

@@ -31,7 +31,7 @@ const colorSchemeDescriptions = {
 
 export const generateThumbnail = async (req: Request, res: Response) => {
   try {
-    const { userId } = req.session;
+    const userId = (req as any).userId;
     const {
       title,
       prompt: user_prompt,
@@ -164,7 +164,7 @@ export const deleteThumbnail = async (req: Request, res: Response) => {
 
     try {
         const { id } = req.params;
-        const { userId } = req.session;
+        const userId = (req as any).userId;
 
         await Thumbnail.findByIdAndDelete({ _id: id, userId });
 

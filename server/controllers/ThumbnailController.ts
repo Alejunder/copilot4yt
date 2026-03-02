@@ -69,7 +69,8 @@ export const generateThumbnail = async (req: Request, res: Response) => {
     if (user_prompt) {
       prompt += ` Additional details: ${user_prompt}`;
     }
-    prompt += ` The thumbnail should be ${aspect_ratio}, visually stunning, and designed to maximize click-through rate. Make it bold, professional, and impossible to ignore.`;
+    const aspectLabel = aspect_ratio === '16:9' ? 'widescreen 16:9' : aspect_ratio === '9:16' ? 'vertical 9:16' : aspect_ratio === '1:1' ? 'square 1:1' : (aspect_ratio || '16:9');
+    prompt += ` The thumbnail must use a ${aspectLabel} aspect ratio, visually stunning, and designed to maximize click-through rate. Make it bold, professional, and impossible to ignore.`;
 
     // Build content parts (text + optional reference image)
     const contentParts: any[] = [];
@@ -81,7 +82,7 @@ export const generateThumbnail = async (req: Request, res: Response) => {
       if (user_prompt) {
         prompt += ` Additional details: ${user_prompt}`;
       }
-      prompt += ` The thumbnail should be ${aspect_ratio}, visually stunning, and designed to maximize click-through rate. Make it bold, professional, and impossible to ignore.`;
+      prompt += ` The thumbnail must use a ${aspectLabel} aspect ratio, visually stunning, and designed to maximize click-through rate. Make it bold, professional, and impossible to ignore.`;
       contentParts.push({
         inlineData: {
           mimeType: referenceImage.mimetype,
@@ -94,15 +95,11 @@ export const generateThumbnail = async (req: Request, res: Response) => {
     const geminiRequestBody = {
       contents: [{ role: "user", parts: contentParts }],
       generationConfig: {
-        responseModalities: ["IMAGE"],
-        imageConfig: {
-          aspectRatio: aspect_ratio || "16:9",
-        },
+        // Both TEXT and IMAGE are required — IMAGE alone causes IMAGE_OTHER on most models.
+        // imageConfig.aspectRatio is not a valid REST API field; aspect ratio goes in the prompt.
+        responseModalities: ["TEXT", "IMAGE"],
       },
     };
-
-    const apiKey = process.env.GEMINI_API_KEY || '';
-    console.log('[Gemini] prompt:', contentParts.find((p:any)=>p.text)?.text);
 
     const geminiResponse = await fetch(
       `${GEMINI_API_URL}?key=${process.env.GEMINI_API_KEY}`,

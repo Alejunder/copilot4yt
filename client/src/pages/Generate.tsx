@@ -46,18 +46,6 @@ function Generate() {
       return;
     }
     
-    // Critical fix for iOS Safari: Verify session before making protected request
-    try {
-      const { data } = await api.get('/api/auth/verify');
-      if (!data.user) {
-        toast.error("Your session has expired. Please log in again.");
-        return;
-      }
-    } catch (error) {
-      toast.error("Please log in to continue");
-      return;
-    }
-    
     // If there's a reference image, show privacy warning first
     if (referenceImage) {
       setShowPrivacyModal(true);

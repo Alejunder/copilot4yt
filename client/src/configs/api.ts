@@ -1,9 +1,19 @@
 import axios from 'axios';
 
+/**
+ * Architecture note — same-origin proxy:
+ * In production, all /api/* requests go to the same origin (this Vercel deployment).
+ * Vercel's vercel.json rewrites them transparently to the backend service.
+ * This makes all cookies first-party (same-site), bypassing Safari ITP entirely.
+ *
+ * In development, VITE_BASE_URL is set in .env.local to http://localhost:3000
+ * so requests go directly to the local backend server.
+ */
 const api = axios.create({
-  baseURL: import.meta.env.VITE_BASE_URL || 'http://localhost:3000',
+  // Production → empty string = same-origin (Vercel proxy handles routing to backend)
+  // Development → http://localhost:3000 (set via VITE_BASE_URL in .env.local)
+  baseURL: import.meta.env.VITE_BASE_URL || '',
   withCredentials: true,
-  // iOS Safari compatibility: Ensure proper headers
   headers: {
     'Content-Type': 'application/json',
   },

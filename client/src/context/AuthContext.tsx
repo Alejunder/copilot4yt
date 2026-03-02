@@ -30,73 +30,77 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [user,setUser] = useState<IUser | null>(null);
     const [isLoggedIn,setIsLoggedIn] = useState<boolean>(false);
 
-    // Helper function to verify session is working (critical for iOS Safari)
-    const verifySession = async (maxRetries = 3, delayMs = 300): Promise<boolean> => {
-        for (let i = 0; i < maxRetries; i++) {
-            try {
-                // Wait before retry to allow cookie to be set (iOS Safari needs this)
-                if (i > 0) {
-                    await new Promise(resolve => setTimeout(resolve, delayMs));
-                }
-                
-                const { data } = await api.get('/api/auth/verify');
-                if (data.user) {
-                    setUser(data.user as IUser);
-                    setIsLoggedIn(true);
-                    return true;
-                }
-            } catch (error) {
-                console.log(`Session verification attempt ${i + 1} failed`);
+    /**
+     * Verifies that the session cookie was accepted by the browser and is
+     * being sent back to the server correctly.
+     *
+     * With the same-origin proxy architecture (Vercel rewrite /api/* → backend),
+     * the session cookie is a first-party cookie on this origin. Safari's ITP
+     * does not block first-party cookies, so a single request is sufficient —
+     * no artificial retries or delays are needed.
+     */
+    const verifySession = async (): Promise<boolean> => {
+        try {
+            const { data } = await api.get('/api/auth/verify');
+            if (data.user) {
+                setUser(data.user as IUser);
+                setIsLoggedIn(true);
+                return true;
             }
+            return false;
+        } catch (error) {
+            console.error('Session verification failed:', error);
+            return false;
         }
-        return false;
     };
 
     const signUp = async ({ name, email, password }: { name: string, email: string, password: string }) => {
         try {
-            const{data} = await api.post('/api/auth/register', { name, email, password });
-            
-            // Critical fix: Verify session is actually working before setting state
-            // This fixes iOS Safari cookie timing issues
+            await api.post('/api/auth/register', { name, email, password });
+
+            /**
+             * After registration, verify the session via a separate GET request.
+             * With the same-origin proxy architecture, the session cookie set by the
+             * backend is delivered to the browser as a first-party cookie and Safari
+             * will accept and persist it without ITP interference.
+             * We do NOT fall back to marking the user as authenticated if this fails —
+             * a failed verify means the session was not actually established.
+             */
             const sessionVerified = await verifySession();
-            
+
             if (sessionVerified) {
-                toast.success(data.message);
+                toast.success('Account created successfully!');
             } else {
-                // Fallback: set user from response if verification fails
-                if(data.user){
-                    setUser(data.user as IUser);
-                    setIsLoggedIn(true);
-                }
-                toast.success(data.message + " (If you have issues, please try logging out and back in)");
+                toast.error('Registration succeeded but the session could not be established. Please try logging in.');
             }
         } catch (error: any) {
             console.log(error);
-            const errorMessage = error.response?.data?.message || "Error al registrar. Por favor intenta de nuevo.";
+            const errorMessage = error.response?.data?.message || 'Error al registrar. Por favor intenta de nuevo.';
             toast.error(errorMessage);
         }
     }
+
     const login = async ({ email, password }: { email: string, password: string }) => {
         try {
-            const{data} = await api.post('/api/auth/login', { email, password });
-            
-            // Critical fix: Verify session is actually working before setting state
-            // This fixes iOS Safari cookie timing issues
+            await api.post('/api/auth/login', { email, password });
+
+            /**
+             * After login, verify the session via a separate GET request.
+             * With the same-origin proxy, cookies are same-site first-party —
+             * Safari ITP does not block them. If verifySession fails here, the
+             * cookie was genuinely not set and the user must be shown an error.
+             * We never fake authentication from the login response body.
+             */
             const sessionVerified = await verifySession();
-            
+
             if (sessionVerified) {
-                toast.success(data.message);
+                toast.success('Logged in successfully!');
             } else {
-                // Fallback: set user from response if verification fails
-                if(data.user){
-                    setUser(data.user as IUser);
-                    setIsLoggedIn(true);
-                }
-                toast.success(data.message + " (If you have issues, please try logging out and back in)");
+                toast.error('Login succeeded but the session could not be verified. Please try again.');
             }
         } catch (error: any) {
             console.log(error);
-            const errorMessage = error.response?.data?.message || "Error al iniciar sesión. Verifica tus credenciales.";
+            const errorMessage = error.response?.data?.message || 'Error al iniciar sesión. Verifica tus credenciales.';
             toast.error(errorMessage);
         }
     }

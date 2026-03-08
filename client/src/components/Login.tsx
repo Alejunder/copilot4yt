@@ -22,14 +22,14 @@ function Login() {
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (state === "login") {
-    login(formData)   
-  }else {
-    signUp(formData)   
+      await login(formData)
+    } else {
+      await signUp(formData)
+    }
   }
-} 
 
 useEffect(() => {
     if(user){

@@ -6,7 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import logo from "../assets/copilot4yt-removebg.png";
 
 export default function Navbar() {
-    const { isLoggedIn, user, logout } = useAuth();
+    const { isLoggedIn, isLoading, user, logout } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
     const navigate = useNavigate();
 
@@ -33,7 +33,10 @@ export default function Navbar() {
                 </div>
                 
                 <div className="flex items-center gap-2">
-                    {isLoggedIn ? (
+                    {isLoading ? (
+                        // Auth check in progress — render nothing to avoid flash of "Get Started"
+                        <div className="hidden md:block w-28 h-9" />
+                    ) : isLoggedIn ? (
                         <div className="relative group">
                             <button className="rounded-full size-8 bg-white/20 border-2 border-white/10">
                                 {user?.name.charAt(0).toUpperCase()}
@@ -48,7 +51,6 @@ export default function Navbar() {
                         <button onClick={() => navigate('/login')} className="hidden md:block px-6 py-2.5 bg-red-600 hover:bg-red-700 active:scale-95 transition-all rounded-full">
                             Get Started
                         </button>
-
                     )}
                      <button onClick={() => setIsOpen(true)} className="md:hidden">
                     <MenuIcon size={26} className="active:scale-90 transition" />
@@ -63,13 +65,13 @@ export default function Navbar() {
                  : <Link to="/about" onClick={() => setIsOpen(false)} >About</Link> 
                 }            
                 <Link to="/contact" onClick={() => setIsOpen(false)} >Contact us</Link>
-                {isLoggedIn ? 
-                  <button onClick={() => setIsOpen(false)} className="active:ring-3 active: ring-white aspect-square size-10 p-1 items-center justify-center  hover:bg-red-700 transition text-white rounded-md flex">
+                {!isLoading && (isLoggedIn ? 
+                  <button onClick={() => { logout(); setIsOpen(false); }} className="active:ring-3 active:ring-white aspect-square size-10 p-1 items-center justify-center hover:bg-red-700 transition text-white rounded-md flex">
                     Logout
                   </button>
                   :
                   <Link to="/login" onClick={() => setIsOpen(false)} >Login</Link>
-                }
+                )}
                 <button onClick={() => setIsOpen(false)} className="active:ring-3 active:ring-white aspect-square size-10 p-1 items-center justify-center bg-red-600 hover:bg-red-700 transition text-white rounded-md flex">
                     <XIcon />
                 </button>

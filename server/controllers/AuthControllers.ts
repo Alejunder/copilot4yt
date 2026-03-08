@@ -3,7 +3,10 @@ import User from "../models/User.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET || 'fallback_secret';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is not set. The server cannot start without it.');
+}
 const JWT_EXPIRES_IN = '7d';
 
 //Controllers for user registration
@@ -22,7 +25,7 @@ export const registerUser = async (req: Request, res: Response) => {
     const newUser = new User({ name, email, password: hashedPassword });
     await newUser.save();
 
-    const token = jwt.sign({ userId: newUser._id.toString() }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    const token = jwt.sign({ userId: newUser._id.toString() }, JWT_SECRET!, { expiresIn: JWT_EXPIRES_IN });
 
     return res.json({
       message: "User registered successfully",
@@ -49,7 +52,7 @@ export const loginUser = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
-    const token = jwt.sign({ userId: user._id.toString() }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    const token = jwt.sign({ userId: user._id.toString() }, JWT_SECRET!, { expiresIn: JWT_EXPIRES_IN });
 
     return res.json({
       message: "User Login successfully",

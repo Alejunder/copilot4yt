@@ -42,6 +42,7 @@ El proyecto está dividido en dos partes:
 | **Lucide React** | Biblioteca de iconos |
 | **React Hot Toast** | Notificaciones toast |
 | **React Fast Marquee** | Componente de marquee animado |
+| **i18n (en/es)** | Internacionalización con hook `useTranslation` |
 
 ### Backend (`server/`)
 
@@ -50,8 +51,10 @@ El proyecto está dividido en dos partes:
 | **Node.js + Express** | Servidor y API REST |
 | **TypeScript** | Tipado estático |
 | **MongoDB + Mongoose** | Base de datos NoSQL y ODM |
-| **Google Gemini AI** | Modelo de generación de imágenes (`gemini-3.1-flash-image-preview`) |
+| **Google AI Studio** | Generación de imágenes vía API REST de Gemini (`gemini-2.5-flash-image`, `gemini-3.1-flash-image-preview`, `gemini-3-pro-image-preview`) |
 | **Cloudinary** | Almacenamiento y CDN de imágenes generadas |
+| **Sharp** | Procesamiento de imágenes y marca de agua en generaciones |
+| **Stripe** | Pasarela de pago para suscripciones y créditos |
 | **Multer** | Manejo de subida de archivos (imagen de referencia) |
 | **JSON Web Tokens (JWT)** | Autenticación stateless |
 | **bcrypt** | Hash seguro de contraseñas |
@@ -75,8 +78,9 @@ El proyecto está dividido en dos partes:
 - Node.js >= 18
 - npm >= 9
 - Una instancia de MongoDB (local o MongoDB Atlas)
-- Cuenta en [Google AI Studio](https://aistudio.google.com/) para obtener una API key de Gemini
+- API Key de [Google AI Studio](https://aistudio.google.com/) (sin necesidad de proyecto GCP ni cuenta de servicio)
 - Cuenta en [Cloudinary](https://cloudinary.com/) para el almacenamiento de imágenes
+- Cuenta en [Stripe](https://stripe.com/) para la pasarela de pagos y webhooks
 
 ### 1. Clonar el repositorio
 
@@ -138,13 +142,17 @@ MONGODB_URI=mongodb+srv://<usuario>:<password>@cluster.mongodb.net/<dbname>
 # Autenticación
 JWT_SECRET=tu_clave_secreta_jwt
 
-# Google Gemini AI
+# Google AI Studio 
 GEMINI_API_KEY=tu_api_key_de_gemini
 
 # Cloudinary
 CLOUDINARY_CLOUD_NAME=tu_cloud_name
 CLOUDINARY_API_KEY=tu_api_key_cloudinary
 CLOUDINARY_API_SECRET=tu_api_secret_cloudinary
+
+# Stripe
+STRIPE_SECRET_KEY=sk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
 
 # Servidor
 PORT=3000
@@ -172,30 +180,40 @@ copilot4yt/
 │       ├── components/         # Componentes reutilizables de UI
 │       ├── configs/            # Configuración de Axios (api.ts)
 │       ├── context/            # Contextos de React (AuthContext)
-│       ├── data/               # Datos estáticos (pricing, features, testimonials…)
+│       ├── data/               # Datos estáticos (pricing, features, testimonials, planBenefits…)
+│       ├── hooks/              # Hooks personalizados (useCredits, useTranslation)
+│       ├── locales/            # Traducciones (en.json, es.json)
 │       ├── pages/              # Páginas de la aplicación (rutas)
 │       ├── sections/           # Secciones de la landing page
+│       ├── utils/              # Utilidades (i18n.ts)
 │       ├── App.tsx             # Componente raíz con las rutas
 │       ├── main.tsx            # Punto de entrada
 │       ├── types.ts            # Tipos TypeScript globales
 │       └── globals.css         # Estilos globales y Tailwind
 │
 └── server/                     # API REST (Express + TypeScript)
-    ├── configs/                # Configuración de DB y cliente de Gemini AI
+    ├── configs/                # Configuración de DB, Google AI Studio y planes
     ├── controllers/            # Lógica de negocio por recurso
-    │   ├── AuthControllers.ts  # Registro e inicio de sesión
+    │   ├── AuthControllers.ts      # Registro e inicio de sesión
+    │   ├── BillingController.ts    # Créditos, checkout y webhooks de Stripe
     │   ├── ThumbnailController.ts  # Generación y gestión de miniaturas
-    │   └── UserController.ts   # Perfil y datos del usuario
+    │   └── UserController.ts       # Perfil y datos del usuario
+    ├── images/                 # Recursos del servidor (watermark.png)
     ├── middlewares/            # Middlewares de Express
     │   ├── auth.ts             # Verificación de JWT
+    │   ├── i18n.ts             # Detección de idioma por Accept-Language
     │   └── upload.ts           # Manejo de subida de imágenes con Multer
     ├── models/                 # Esquemas de Mongoose
-    │   ├── User.ts             # Modelo de usuario
-    │   └── Thumbnail.ts        # Modelo de miniatura generada
+    │   ├── Credits.ts          # Modelo de créditos y plan del usuario
+    │   ├── Thumbnail.ts        # Modelo de miniatura generada
+    │   └── User.ts             # Modelo de usuario
     ├── routes/                 # Definición de rutas de la API
     │   ├── AuthRoutes.ts       # /api/auth
+    │   ├── BillingRoutes.ts    # /api/billing
     │   ├── ThumbnailRoutes.ts  # /api/thumbnail
     │   └── UserRoutes.ts       # /api/user
+    ├── services/               # Servicios externos
+    │   └── stripeService.ts    # Lógica de integración con Stripe
     └── server.ts               # Punto de entrada del servidor
 ```
 
@@ -203,15 +221,16 @@ copilot4yt/
 
 ## Funcionalidades
 
-- **Generación de miniaturas con IA**: Genera imágenes profesionales para YouTube en segundos usando el modelo `gemini-3.1-flash-image-preview` de Google.
+- **Generación de miniaturas con IA**: Genera imágenes profesionales para YouTube en segundos usando Google AI Studio (API REST de Gemini) con tres modelos disponibles según el plan: `gemini-2.5-flash-image` (gratis), `gemini-3.1-flash-image-preview` (Basic) y `gemini-3-pro-image-preview` (Pro/Enterprise).
 - **Estilos visuales**: Elige entre 5 estilos de diseño: *Bold & Graphic*, *Tech/Futuristic*, *Minimalist*, *Photorealistic* e *Illustrated*.
 - **Paletas de color**: 8 esquemas de color disponibles: *Vibrant*, *Sunset*, *Forest*, *Neon*, *Purple*, *Monochrome*, *Ocean* y *Pastel*.
 - **Relaciones de aspecto**: Soporte para los formatos estándar de YouTube: `16:9`, `1:1` y `9:16`.
-- **Imagen de referencia**: Sube una imagen como inspiración para que la IA tome como base composición y estilo.
-- **Superposición de texto**: Opción para incluir texto superpuesto en la miniatura generada.
+- **Imagen de referencia**: Sube una imagen como inspiración para que la IA tome como base composición y estilo (disponible a partir del plan Basic).
+- **Marca de agua**: Las generaciones incluyen una marca de agua aplicada con Sharp; se elimina según el plan contratado.
 - **Autenticación de usuarios**: Registro e inicio de sesión con JWT. Las credenciales se almacenan con hash bcrypt.
 - **Historial de generaciones**: Cada usuario puede consultar todas sus miniaturas generadas en `/my-generation`.
 - **Vista previa de YouTube**: Visualiza cómo se verá la miniatura dentro de la interfaz de YouTube real.
 - **Landing page completa**: Secciones de hero, características, testimonios y planes de precios.
-- **Sistema de créditos**: Tres planes de pago (*Basic*, *Pro*, *Enterprise*) con distintas cantidades de créditos para generación.
+- **Sistema de créditos y planes**: Cuatro niveles — *Free* (20 créditos diarios), *Basic* (500 créditos), *Pro* (1 100 créditos) y *Enterprise* (2 800 créditos) — gestionados con Stripe Checkout y webhooks.
+- **Internacionalización**: Interfaz disponible en inglés y español, con detección automática por `Accept-Language`.
 - **Despliegue en Vercel**: Configurado para funcionar como monorepo en Vercel con rewrite de rutas `/api/*` al backend.

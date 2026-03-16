@@ -5,23 +5,31 @@ const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT as string;
 const LOCATION   = process.env.GOOGLE_CLOUD_LOCATION ?? "us-central1";
 
 
-const googleAuthOptions: Record<string, unknown> = {
-  scopes: "https://www.googleapis.com/auth/cloud-platform",
-};
-
-if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
-  try {
-    googleAuthOptions.credentials = JSON.parse(
-      process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON
-    );
-  } catch {
-    console.error("[ai] GOOGLE_APPLICATION_CREDENTIALS_JSON is not valid JSON — Vertex AI calls will fail.");
-  }
-} else if (!process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-  console.warn("[ai] No credential source found (GOOGLE_APPLICATION_CREDENTIALS_JSON or GOOGLE_APPLICATION_CREDENTIALS) — Vertex AI calls will fail.");
+if (!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+  console.warn("[ai] GOOGLE_APPLICATION_CREDENTIALS_JSON is not set — Vertex AI calls will fail.");
 }
 
-const vertexAI = new VertexAI({ project: PROJECT_ID, location: LOCATION, googleAuthOptions });
+let parsedCredentials: Record<string, unknown> | undefined;
+try {
+  const raw = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON ?? "{}");
+  // Vercel stores multiline secrets with literal \n — restore real newlines
+  // in the RSA private key or the JWT signature will be invalid.
+  if (raw.private_key) {
+    raw.private_key = (raw.private_key as string).replace(/\\n/g, "\n");
+  }
+  parsedCredentials = raw;
+} catch {
+  console.error("[ai] GOOGLE_APPLICATION_CREDENTIALS_JSON is not valid JSON — Vertex AI calls will fail.");
+}
+
+const vertexAI = new VertexAI({
+  project: PROJECT_ID,
+  location: LOCATION,
+  googleAuthOptions: {
+    scopes: "https://www.googleapis.com/auth/cloud-platform",
+    credentials: parsedCredentials,
+  },
+});
 
 // export const replicate = new Replicate({
 //   auth: process.env.REPLICATE_API_TOKEN as string,

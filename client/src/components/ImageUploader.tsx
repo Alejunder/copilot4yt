@@ -1,5 +1,6 @@
 import { Upload, X } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface ImageUploaderProps {
   onImageSelect: (file: File | null) => void;
@@ -9,6 +10,7 @@ interface ImageUploaderProps {
 function ImageUploader({ onImageSelect, disabled }: ImageUploaderProps) {
   const [preview, setPreview] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string>("");
+  const { t } = useTranslation();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -46,9 +48,9 @@ function ImageUploader({ onImageSelect, disabled }: ImageUploaderProps) {
   return (
     <div>
       <label className='block text-sm font-medium text-zinc-100 mb-2'>
-        Reference Image <span className='text-zinc-400 text-xs'>(optional)</span>
+        {t('imageUploader.label')} <span className='text-zinc-400 text-xs'>{t('imageUploader.optional')}</span>
       </label>
-      <p className='text-xs text-zinc-400 mb-3'>Upload an image to help the AI understand your vision better</p>
+      <p className='text-xs text-zinc-400 mb-3'>{t('imageUploader.hint')}</p>
 
       {!preview ? (
         <label htmlFor="image-upload" className={`block w-full px-4 py-6 rounded-lg border-2 border-dashed border-white/20 bg-white/5 hover:bg-white/10 transition-colors cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
@@ -63,8 +65,8 @@ function ImageUploader({ onImageSelect, disabled }: ImageUploaderProps) {
           <div className="flex flex-col items-center justify-center space-y-2">
             <Upload className="w-8 h-8 text-zinc-400" />
             <div className="text-center">
-              <p className="text-sm text-zinc-300">Click to upload</p>
-              <p className="text-xs text-zinc-500 mt-1">PNG, JPG up to 5MB</p>
+              <p className="text-sm text-zinc-300">{t('imageUploader.clickToUpload')}</p>
+              <p className="text-xs text-zinc-500 mt-1">{t('imageUploader.fileLimit')}</p>
             </div>
           </div>
         </label>
@@ -78,7 +80,7 @@ function ImageUploader({ onImageSelect, disabled }: ImageUploaderProps) {
             />
             <div className="flex-1 min-w-0">
               <p className="text-sm text-zinc-200 truncate">{fileName}</p>
-              <p className="text-xs text-zinc-500">Reference image uploaded</p>
+              <p className="text-xs text-zinc-500">{t('imageUploader.uploadedLabel')}</p>
             </div>
             <button
               onClick={handleRemove}

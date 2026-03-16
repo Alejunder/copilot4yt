@@ -3,11 +3,13 @@ import TestimonialCard from "../components/TestimonialCard";
 import { testimonialsData } from "../data/testimonial";
 import type { ITestimonial } from "../types";
 import Marquee from "react-fast-marquee";
+import { useTranslation } from "../hooks/useTranslation";
 
 export default function TestimonialSection() {
+    const { t } = useTranslation();
     return (
         <div id="testimonials" className="px-4 md:px-16 lg:px-24 xl:px-32">
-            <SectionTitle text1="Testimonials" text2="Loved by creators" text3="See how AI thumbnails are helping channels explode their views" />
+            <SectionTitle text1={t('testimonials.sectionLabel')} text2={t('testimonials.sectionTitle')} text3={t('testimonials.sectionSubtitle')} />
 
             <Marquee className="max-w-5xl mx-auto mt-11" gradient={true} speed={25} gradientColor="#000">
                 <div className="flex items-center justify-center py-5 overflow-hidden">

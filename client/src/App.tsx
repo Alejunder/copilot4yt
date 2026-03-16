@@ -10,6 +10,8 @@ import MyContact from "./pages/MyContact";
 import MyGeneration from "./pages/MyGeneration";
 import YtPreview from "./pages/YtPreview";
 import Login from "./components/Login";
+import Pricing from "./pages/Pricing";
+import Dashboard from "./pages/Dashboard";
 import { useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 
@@ -34,6 +36,8 @@ export default function App() {
                 <Route path="/contact" element={<MyContact />} />
                 <Route path="/preview" element={<YtPreview />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/pricing" element={<Pricing />} />
+                <Route path="/dashboard" element={<Dashboard />} />
             </Routes>
             <Footer />
         </>

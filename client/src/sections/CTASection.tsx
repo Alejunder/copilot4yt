@@ -1,10 +1,12 @@
 'use client'
 import { motion } from "motion/react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "../hooks/useTranslation";
 
 export default function CTASection() {
 
     const navigate = useNavigate();
+    const { t } = useTranslation();
     return (
         <motion.div className="max-w-5xl py-16 mt-40 md:pl-20 md:w-full max-md:mx-4 md:mx-auto flex flex-col md:flex-row max-md:gap-6 items-center justify-between text-left bg-linear-to-b from-red-900 to-red-950 rounded-2xl p-6 text-white"
             initial={{ y: 150, opacity: 0 }}
@@ -19,7 +21,7 @@ export default function CTASection() {
                     viewport={{ once: true }}
                     transition={{ type: "spring", stiffness: 280, damping: 70, mass: 1 }}
                 >
-                    Ready to go viral?
+                    {t('cta.title')}
                 </motion.h1>
                 <motion.p className="bg-linear-to-r from-white to-red-400 text-transparent bg-clip-text text-lg"
                     initial={{ y: 80, opacity: 0 }}
@@ -27,7 +29,7 @@ export default function CTASection() {
                     viewport={{ once: true }}
                     transition={{ type: "spring", stiffness: 200, damping: 70, mass: 1 }}
                 >
-                    Join thousands of creators using AI to boost their CTR.
+                    {t('cta.subtitle')}
                 </motion.p>
             </div>
             <motion.button onClick={()=> navigate('/generate')} className="px-12 py-3 text-slate-800 bg-white hover:bg-slate-200 rounded-full text-sm mt-4"
@@ -36,7 +38,7 @@ export default function CTASection() {
                 viewport={{ once: true }}
                 transition={{ type: "spring", stiffness: 280, damping: 70, mass: 1 }}
             >
-                Generate free thumbnail 
+                {t('cta.button')} 
             </motion.button>
         </motion.div>
     );

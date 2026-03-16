@@ -1,32 +1,29 @@
 
 import { motion } from "motion/react";
-import { Music2, LinkedinIcon, Disc3, Rocket, Code2, Sparkles, Heart, Zap } from "lucide-react";
+import { LinkedinIcon, Rocket, Code2, Sparkles, Heart, Zap } from "lucide-react";
 import copilot4ytLogo from '../assets/copilot4yt.svg';
+import { useTranslation } from "../hooks/useTranslation";
 
 function About() {
+  const { t } = useTranslation();
+
   const skills = [
-    { icon: <Code2 className="size-5" />, text: "Full-Stack Development" },
-    { icon: <Sparkles className="size-5" />, text: "AI Integration" },
-    { icon: <Zap className="size-5" />, text: "Performance Optimization" },
-    { icon: <Heart className="size-5" />, text: "User Experience" },
+    { icon: <Code2 className="size-5" />, text: t('about.skill1') },
+    { icon: <Sparkles className="size-5" />, text: t('about.skill2') },
+    { icon: <Zap className="size-5" />, text: t('about.skill3') },
+    { icon: <Heart className="size-5" />, text: t('about.skill4') },
   ];
 
   const projects = [
     {
-      name: "MoodBeats Hub",
-      description: "Music platform with curated playlists for every mood",
-      link: "https://mood-beats-hub.vercel.app",
-      icon: <Music2 className="size-6" />
-    },
-    {
-      name: "LinkedIn Profile",
-      description: "Professional network and career highlights",
+      name: t('about.linkedinName'),
+      description: t('about.linkedinDesc'),
       link: "https://www.linkedin.com/in/alejandro-camayo-424850369/",
       icon: <LinkedinIcon className="size-6" />
     },
     {
-      name: "Portfolio",
-      description: "Personal portfolio showcasing projects and skills",
+      name: t('about.portfolioName'),
+      description: t('about.portfolioDesc'),
       link: "https://alecam.dev",
       icon: <Rocket className="size-6" />
     }
@@ -54,22 +51,19 @@ function About() {
               transition={{ delay: 0.2, type: "spring", stiffness: 320, damping: 70, mass: 1 }}
             >
               <span className="bg-red-800 text-white text-xs px-3.5 py-1 rounded-full">
-                About Me
+                {t('about.badge')}
               </span>
-              <span className="text-sm">Developer & Creator</span>
+              <span className="text-sm">{t('about.badgeSubtext')}</span>
             </motion.div>
             
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              Hi, I'm <span className="text-red-500">Alejandro Camayo</span>
+              {t('about.title')} <span className="text-red-500">{t('about.titleName')}</span>
             </h1>
             <p className="text-lg text-slate-300 leading-relaxed mb-6">
-              Full-stack developer focused on enhancing projects. 
-              I built <span className="text-red-400 font-semibold">Copilot4YT</span> to help YouTubers 
-              generate stunning thumbnails with AI, because every creator deserves professional-looking content.
+              {t('about.desc1').split('Copilot4YT')[0]}<span className="text-red-400 font-semibold">Copilot4YT</span>{t('about.desc1').split('Copilot4YT')[1]}
             </p>
             <p className="text-slate-400 leading-relaxed">
-              Making every customer feel valued—no matter the size of your audience. 
-              I believe in building products that are accessible, powerful, and delightful to use.
+              {t('about.desc2')}
             </p>
           </div>
           
@@ -99,7 +93,7 @@ function About() {
           viewport={{ once: true }}
           transition={{ type: "spring", stiffness: 240, damping: 70, mass: 1 }}
         >
-          <h2 className="text-2xl font-semibold text-white mb-8">What I Do</h2>
+          <h2 className="text-2xl font-semibold text-white mb-8">{t('about.skillsTitle')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {skills.map((skill, index) => (
               <motion.div
@@ -125,7 +119,7 @@ function About() {
           viewport={{ once: true }}
           transition={{ type: "spring", stiffness: 240, damping: 70, mass: 1 }}
         >
-          <h2 className="text-2xl font-semibold text-white mb-8">Other Projects</h2>
+          <h2 className="text-2xl font-semibold text-white mb-8">{t('about.projectsTitle')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {projects.map((project, index) => (
               <motion.a
@@ -161,21 +155,11 @@ function About() {
           viewport={{ once: true }}
           transition={{ type: "spring", stiffness: 240, damping: 70, mass: 1 }}
         >
-          <h2 className="text-2xl font-semibold text-white mb-6">Let's Connect</h2>
+          <h2 className="text-2xl font-semibold text-white mb-6">{t('about.connectTitle')}</h2>
           <p className="text-slate-400 mb-8 max-w-2xl mx-auto">
-            Interested in collaborating or just want to say hi? Feel free to reach out through any of these platforms.
+            {t('about.connectDesc')}
           </p>
           <div className="flex justify-center items-center gap-6">
-            <motion.a 
-              href="https://mood-beats-hub.vercel.app" 
-              target="_blank" 
-              rel="noreferrer"
-              className="p-4 rounded-full border border-slate-800 bg-slate-950 hover:border-red-600 hover:bg-red-950/20 transition-all"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Music2 className="size-6 text-slate-300 hover:text-red-500" />
-            </motion.a>
             <motion.a 
               href="https://www.linkedin.com/in/alejandro-camayo-424850369/" 
               target="_blank" 

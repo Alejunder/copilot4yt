@@ -9,6 +9,10 @@ interface AuthContextProps {
     setIsLoggedIn: (isLoggedIn: boolean) => void;
     user: IUser | null;
     setUser: (user: IUser | null) => void;
+    credits: number | null;
+    plan: string | null;
+    planExpiresAt: Date | null;
+    fetchCredits: () => Promise<void>;
     login: (user: { email: string, password: string }) => Promise<void>;
     signUp: (user: { name: string, email: string, password: string }) => Promise<void>;
     logout: () => Promise<void>;
@@ -32,6 +36,10 @@ const AuthContext = createContext<AuthContextProps>({
     setIsLoggedIn: () => { },
     user: null,
     setUser: () => { },
+    credits: null,
+    plan: null,
+    planExpiresAt: null,
+    fetchCredits: async () => { },
     login: async () => { },
     signUp: async () => { },
     logout: async () => { },
@@ -46,6 +54,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // isLoading is true until the initial token verification completes.
     // While true, no component should render "not authenticated" UI.
     const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [credits, setCredits] = useState<number | null>(null);
+    const [plan, setPlan] = useState<string | null>(null);
+    const [planExpiresAt, setPlanExpiresAt] = useState<Date | null>(null);
+
+    const fetchCredits = async () => {
+        try {
+            const { data } = await api.get('/api/billing/credits');
+            setCredits(data.data.credits);
+            setPlan(data.data.plan ?? null);
+            setPlanExpiresAt(data.data.planExpiresAt ? new Date(data.data.planExpiresAt) : null);
+        } catch {
+            // silently fail — credits display is non-critical
+        }
+    };
 
     const signUp = async ({ name, email, password }: { name: string, email: string, password: string }) => {
         try {
@@ -56,6 +78,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (data.user) {
                 setUser(data.user as IUser);
                 setIsLoggedIn(true);
+                await fetchCredits();
             }
             toast.success('Account created successfully!');
         } catch (error: any) {
@@ -74,6 +97,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (data.user) {
                 setUser(data.user as IUser);
                 setIsLoggedIn(true);
+                await fetchCredits();
             }
             toast.success('Logged in successfully!');
         } catch (error: any) {
@@ -87,6 +111,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         safeRemoveToken();
         setUser(null);
         setIsLoggedIn(false);
+        setCredits(null);
+        setPlan(null);
+        setPlanExpiresAt(null);
         toast.success('Logged out successfully');
     }
 
@@ -106,6 +133,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (data.user) {
                 setUser(data.user as IUser);
                 setIsLoggedIn(true);
+                fetchCredits();
             } else {
                 // Backend explicitly said there's no user (malformed response)
                 safeRemoveToken();
@@ -149,7 +177,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }, [])
 
     const value = {
-        user, setUser, isLoggedIn, setIsLoggedIn, isLoading, login, signUp, logout
+        user, setUser, isLoggedIn, setIsLoggedIn, isLoading, credits, plan, planExpiresAt, fetchCredits, login, signUp, logout
     }
     return (
         <AuthContext.Provider value={value}>

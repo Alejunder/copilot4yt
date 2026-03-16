@@ -6,12 +6,14 @@ import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import api from "../configs/api"
 import toast from "react-hot-toast"
+import { useTranslation } from "../hooks/useTranslation"
 
 
 const MyGeneration = () => {
 
   const {isLoggedIn} = useAuth();
   const navigate = useNavigate()
+  const { t } = useTranslation()
 
   const aspectRatioClasses: Record<string, string> = {
     "16:9": "aspect-video",
@@ -51,7 +53,7 @@ const MyGeneration = () => {
 
   const handleDelete = async (id: string) => {
     try {
-      const confirm = window.confirm("Are you sure you want to delete this thumbnail?");
+      const confirm = window.confirm(t('myGenerations.deleteConfirm'));
       if (!confirm) return;
       const {data} = await api.delete(`/api/thumbnail/delete/${id}`);
       toast.success(data.message);
@@ -75,8 +77,8 @@ const MyGeneration = () => {
       <div className="mt-32 min-h-screen px-6 md:px-16 lg:px-24 xl:px-32">
         {/* HEADER  */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-zinc-200">My Generations</h1>
-          <p className="text-sm text-zinc-400 mt-1"> View and manage all your AI-generated thumbnails</p>
+          <h1 className="text-2xl font-bold text-zinc-200">{t('myGenerations.title')}</h1>
+          <p className="text-sm text-zinc-400 mt-1">{t('myGenerations.subtitle')}</p>
         </div>
         {/* Loading */}
         {loading && (
@@ -87,8 +89,8 @@ const MyGeneration = () => {
         {/* EMPTY STATE */}
         {!loading && thumbnails.length === 0 && (
           <div className="text-center py-24">
-            <h3 className="text-lg font-semibold text-zinc-200">No thumbnails yet</h3>
-            <p className="mt-2 text-sm text-zinc-400">Generate your first thumbnail to see it here</p>
+            <h3 className="text-lg font-semibold text-zinc-200">{t('myGenerations.emptyTitle')}</h3>
+            <p className="mt-2 text-sm text-zinc-400">{t('myGenerations.emptySubtitle')}</p>
           </div>
         )}
         {/* GRID */}
@@ -108,10 +110,10 @@ const MyGeneration = () => {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-zinc-400">
-                        {thumb.isGenerating ? "Generating..." : "No Image"}
+                        {thumb.isGenerating ? t('myGenerations.generating') : t('myGenerations.noImage')}
                       </div>
                     )}
-                    {thumb.isGenerating && <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-sm font-medium text-white">Generating...</div>}
+                    {thumb.isGenerating && <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-sm font-medium text-white">{t('myGenerations.generating')}</div>}
                   </div>
                   {/* CONTENT */}
                   <div className="p-4 space-y-2">

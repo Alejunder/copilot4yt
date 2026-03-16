@@ -1,36 +1,38 @@
-
 import { motion } from "motion/react";
 import { Rocket, LinkedinIcon, Github, MessageCircle, Mail, Send, MapPin } from "lucide-react";
+import { useTranslation } from "../hooks/useTranslation";
 
 function MyContact() {
+  const { t } = useTranslation();
+
   const contactMethods = [
     {
-      title: "Portfolio",
-      description: "Check out my work and projects",
+      title: t('contact.portfolioTitle'),
+      description: t('contact.portfolioDesc'),
       link: "https://alecam.dev",
       icon: <Rocket className="size-8" />,
-      action: "Visit Site"
+      action: t('contact.portfolioAction')
     },
     {
-      title: "LinkedIn",
-      description: "Connect professionally",
+      title: t('contact.linkedinTitle'),
+      description: t('contact.linkedinDesc'),
       link: "https://www.linkedin.com/in/alejandro-camayo-424850369/",
       icon: <LinkedinIcon className="size-8" />,
-      action: "Connect"
+      action: t('contact.linkedinAction')
     },
     {
-      title: "GitHub",
-      description: "Explore my code repositories",
+      title: t('contact.githubTitle'),
+      description: t('contact.githubDesc'),
       link: "https://github.com/alejunder",
       icon: <Github className="size-8" />,
-      action: "View Profile"
+      action: t('contact.githubAction')
     },
     {
-      title: "WhatsApp",
-      description: "Quick message or call",
+      title: t('contact.whatsappTitle'),
+      description: t('contact.whatsappDesc'),
       link: "https://wa.me/640660170",
       icon: <MessageCircle className="size-8" />,
-      action: "Send Message"
+      action: t('contact.whatsappAction')
     }
   ];
 
@@ -55,17 +57,16 @@ function MyContact() {
             transition={{ delay: 0.2, type: "spring", stiffness: 320, damping: 70, mass: 1 }}
           >
             <span className="bg-red-800 text-white text-xs px-3.5 py-1 rounded-full">
-              Contact
+              {t('contact.badge')}
             </span>
-            <span className="text-sm">Let's Work Together</span>
+            <span className="text-sm">{t('contact.badgeSubtext')}</span>
           </motion.div>
           
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Get In <span className="text-red-500">Touch</span>
+            {t('contact.title')} <span className="text-red-500">{t('contact.titleHighlight')}</span>
           </h1>
           <p className="text-lg text-slate-300 max-w-2xl mx-auto">
-            Have a project in mind? Want to collaborate? Or just want to say hi? 
-            I'd love to hear from you. Choose your preferred way to connect.
+            {t('contact.subtitle')}
           </p>
         </motion.div>
 
@@ -116,26 +117,26 @@ function MyContact() {
             <div>
               <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
                 <Mail className="size-5 text-red-500" />
-                My certifications
+                {t('contact.certifications')}
               </h3>
               <a href="https://www.alecam.dev/certificaciones" className="text-slate-300 hover:text-red-400 transition-colors">
-                See here
+                {t('contact.certificationsLink')}
               </a>
               <p className="text-slate-500 text-sm mt-2">
-                For business inquiries and collaborations
+                {t('contact.certificationsDesc')}
               </p>
             </div>
             
             <div>
               <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
                 <MapPin className="size-5 text-red-500" />
-                Location
+                {t('contact.location')}
               </h3>
               <p className="text-slate-300">
-                Remote / Mallorca
+                {t('contact.locationValue')}
               </p>
               <p className="text-slate-500 text-sm mt-2">
-                Open to remote opportunities and collaborations
+                {t('contact.locationDesc')}
               </p>
             </div>
           </div>
@@ -150,7 +151,7 @@ function MyContact() {
           transition={{ delay: 0.5, duration: 0.6 }}
         >
           <p className="text-slate-400 text-sm">
-            💡 <span className="text-slate-300">Average response time:</span> Within 24 hours
+            💡 <span className="text-slate-300">{t('contact.responseTime')}</span>
           </p>
         </motion.div>
       </div>

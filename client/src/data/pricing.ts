@@ -6,11 +6,12 @@ export const pricingData: IPricing[] = [
         price: 9,
         period: "500 credits",
         features: [
-            "50 Premium AI Thumbnails",
+            "500 one-time credits (never expire)",
             "Best for starters",
-            "Access to all AI models",
+            "1-month access to Gemini 3.1 Flash model",
+            "Reference image uploads",
             "No watermark on downloads",
-            "High-quality",
+            "High-quality generation",
             "Commercial usage allowed",
         ],
         mostPopular: false
@@ -20,11 +21,12 @@ export const pricingData: IPricing[] = [
         price: 19,
         period: "1100 credits",
         features: [
-            "110 Premium AI Thumbnails",
-            "Best for intermediate",
-            "Access to all AI models",
+            "1,100 one-time credits (never expire)",
+            "Best for intermediate creators",
+            "1-month access to all AI models incl. Gemini 3 Pro",
+            "Reference image uploads",
             "No watermark on downloads",
-            "High-quality",
+            "High-quality generation",
             "Commercial usage allowed",
         ],
         mostPopular: true
@@ -34,11 +36,12 @@ export const pricingData: IPricing[] = [
         price: 49,
         period: "2800 credits",
         features: [
-            "280 Premium AI Thumbnails",
+            "2,800 one-time credits (never expire)",
             "Best for professionals",
-            "Access to all AI models",
+            "1-month access to all AI models incl. Gemini 3 Pro",
+            "Reference image uploads",
             "No watermark on downloads",
-            "High-quality",
+            "High-quality generation",
             "Commercial usage allowed",
         ],
         mostPopular: false

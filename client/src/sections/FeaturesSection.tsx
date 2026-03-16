@@ -6,11 +6,16 @@ import { featuresData } from "../data/features";
 import type { IFeature } from "../types";
 import imgfeatures1 from "../assets/features-showcase-1.jpg";
 import imgfeatures2 from "../assets/features-showcase-2.png";
+import { useTranslation } from "../hooks/useTranslation";
 
 export default function FeaturesSection() {
+    const { t } = useTranslation();
+    const featureTitles = [t('features.item1Title'), t('features.item2Title'), t('features.item3Title')];
+    const featureDescs = [t('features.item1Desc'), t('features.item2Desc'), t('features.item3Desc')];
+
     return (
         <div id="features" className="px-4 md:px-16 lg:px-24 xl:px-32">
-            <SectionTitle text1="Features" text2="Why use our generator?" text3="Create stunning thumbnails that get clicks, without the hassle" />
+            <SectionTitle text1={t('features.sectionLabel')} text2={t('features.sectionTitle')} text3={t('features.sectionSubtitle')} />
             <div className="flex flex-wrap items-center justify-center gap-6 md:gap-4 mt-16 px-6">
                 {featuresData.map((feature: IFeature, index: number) => (
                     <motion.div key={index} className={`${index === 1 ? 'p-px rounded-[13px] bg-linear-to-br from-red-600 to-slate-800' : ''}`}
@@ -22,10 +27,10 @@ export default function FeaturesSection() {
                         <div className="p-6 rounded-xl space-y-4 border border-slate-800 bg-slate-950 max-w-80 w-full">
                             <div className="text-red-500">{feature.icon}</div>
                             <h3 className="text-base font-medium text-white">
-                                {feature.title}
+                                {featureTitles[index]}
                             </h3>
                             <p className="text-slate-400 line-clamp-2 pb-4">
-                                {feature.description}
+                                {featureDescs[index]}
                             </p>
                         </div>
                     </motion.div>
@@ -39,7 +44,7 @@ export default function FeaturesSection() {
                     viewport={{ once: true }}
                     transition={{ type: "spring", stiffness: 320, damping: 70, mass: 1 }}
                 >
-                    Our AI understands what makes a video go viral and designs thumbnails accordingly.
+                    {t('features.aiCaption')}
                 </motion.p>
                 <div className="grid grid-cols-1 md:grid-cols-3 mt-8 gap-10">
                     <motion.div className="md:col-span-2"
@@ -57,10 +62,10 @@ export default function FeaturesSection() {
                         transition={{ delay: 0.15, type: "spring", stiffness: 320, damping: 70, mass: 1 }}
                     >
                         <img src={imgfeatures2} alt="features showcase" width={1000} height={500} className="rounded-2xl border-2 border-red-600 hover:-translate-y-0.5 transition duration-300" />
-                        <h3 className="text-[24px]/7.5 text-slate-300 font-medium mt-6">boost your views with AI-optimized designs</h3>
-                        <p className="text-slate-300 mt-2">Stop guessing and start ranking. Our AI creates designs proven to capture attention</p>
+                        <h3 className="text-[24px]/7.5 text-slate-300 font-medium mt-6">{t('features.showcaseTitle')}</h3>
+                        <p className="text-slate-300 mt-2">{t('features.showcaseDesc')}</p>
                         <a href="/generate" className="group flex items-center gap-2 mt-4 text-red-600 hover:text-red-700 transition">
-                            Start generating free
+                            {t('features.showcaseCta')}
                             <ArrowUpRight className="size-5 group-hover:translate-x-0.5 transition duration-300" />
                         </a>
                     </motion.div>

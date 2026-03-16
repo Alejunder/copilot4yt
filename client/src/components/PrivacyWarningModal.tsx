@@ -1,4 +1,5 @@
 import { AlertTriangle, X } from 'lucide-react';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface PrivacyWarningModalProps {
   isOpen: boolean;
@@ -7,6 +8,7 @@ interface PrivacyWarningModalProps {
 }
 
 function PrivacyWarningModal({ isOpen, onClose, onConfirm }: PrivacyWarningModalProps) {
+  const { t } = useTranslation();
   if (!isOpen) return null;
 
   return (
@@ -37,16 +39,16 @@ function PrivacyWarningModal({ isOpen, onClose, onConfirm }: PrivacyWarningModal
 
         {/* Title */}
         <h3 className="text-xl font-bold text-zinc-100 text-center">
-          Privacy Notice
+          {t('privacyModal.title')}
         </h3>
 
         {/* Message */}
         <div className="space-y-3">
           <p className="text-sm text-zinc-300 leading-relaxed">
-            Please ensure that the uploaded image does not violate the privacy or rights of third parties.
+            {t('privacyModal.message1')}
           </p>
           <p className="text-sm text-zinc-300 leading-relaxed">
-            Avoid using photographs containing faces or personal data of individuals without their explicit consent.
+            {t('privacyModal.message2')}
           </p>
         </div>
 
@@ -56,13 +58,13 @@ function PrivacyWarningModal({ isOpen, onClose, onConfirm }: PrivacyWarningModal
             onClick={onClose}
             className="flex-1 px-4 py-3 rounded-xl font-medium bg-white/10 hover:bg-white/20 text-zinc-100 transition-colors"
           >
-            Cancel
+            {t('privacyModal.cancel')}
           </button>
           <button
             onClick={onConfirm}
             className="flex-1 px-4 py-3 rounded-xl font-medium bg-gradient-to-b from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white transition-colors"
           >
-            I Understand, Continue
+            {t('privacyModal.confirm')}
           </button>
         </div>
       </div>

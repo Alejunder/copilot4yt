@@ -1,11 +1,28 @@
 import { footerData } from "../data/footer";
-import { Music2, LinkedinIcon, Disc3, Rocket } from "lucide-react";
+import { LinkedinIcon, Disc3, Rocket } from "lucide-react";
 import { motion } from "motion/react";
 import type { IFooterLink } from "../types";
 import { Link } from "react-router-dom";
 import copilot4ytLogo from '../assets/copilot4yt.svg';
+import { useTranslation } from "../hooks/useTranslation";
 
 export default function Footer() {
+    const { t } = useTranslation();
+
+    const sectionTitles: Record<string, string> = {
+        "Product": t('footer.productTitle'),
+        "Resources": t('footer.resourcesTitle'),
+        "Legal": t('footer.legalTitle'),
+    };
+    const linkNames: Record<string, string> = {
+        "Contact": t('footer.contactLink'),
+        "Pricing": t('footer.pricingLink'),
+        "Portfolio": t('footer.portfolioLink'),
+        "About": t('footer.aboutLink'),
+        "Privacy": t('footer.privacyLink'),
+        "Terms": t('footer.termsLink'),
+    };
+
     return (
         <footer className="flex flex-wrap justify-center md:justify-between overflow-hidden gap-10 md:gap-20 mt-40 py-6 px-6 md:px-16 lg:px-24 xl:px-32 text-[13px] text-gray-500">
             <motion.div className="flex flex-wrap items-start gap-10 md:gap-35"
@@ -19,12 +36,12 @@ export default function Footer() {
                 </Link>
                 {footerData.map((section, index) => (
                     <div key={index}>
-                        <p className="text-slate-100 font-semibold">{section.title}</p>
+                        <p className="text-slate-100 font-semibold">{sectionTitles[section.title] ?? section.title}</p>
                         <ul className="mt-2 space-y-2">
                             {section.links.map((link: IFooterLink, index: number) => (
                                 <li key={index}>
                                     <Link to={link.href} className="hover:text-red-600 transition">
-                                        {link.name}
+                                        {linkNames[link.name] ?? link.name}
                                     </Link>
                                 </li>
                             ))}
@@ -38,11 +55,8 @@ export default function Footer() {
                 viewport={{ once: true }}
                 transition={{ type: "spring", stiffness: 280, damping: 70, mass: 1 }}
             >
-                <p className="max-w-60">Making every customer feel valued—no matter the size of your audience.</p>
+                <p className="max-w-60">{t('footer.tagline')}</p>
                 <div className="flex items-center gap-4 mt-3">
-                    <a href="https://mood-beats-hub.vercel.app" target="_blank" rel="noreferrer">
-                        <Music2 className="size-5 hover:text-red-500" />
-                    </a>
                     <a href="https://www.linkedin.com/in/alejandro-camayo-424850369/" target="_blank" rel="noreferrer">
                         <LinkedinIcon className="size-5 hover:text-red-500" />
                     </a>

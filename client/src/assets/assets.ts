@@ -6,6 +6,53 @@ export type AspectRatio = (typeof aspectRatios)[number];
 export const thumbnailStyles = ["Bold & Graphic", "Minimalist", "Photorealistic", "Illustrated", "Tech/Futuristic"];
 export type ThumbnailStyle = (typeof thumbnailStyles)[number];
 
+export interface AIModel {
+  id: string;
+  name: string;
+  /** Short description shown in the selector */
+  description: string;
+  /** AI provider — used for grouping in the dropdown */
+  provider: 'gemini' | 'flux';
+  /** Thumbnail styles this model excels at */
+  bestFor: ThumbnailStyle[];
+  /** Requires a paid plan */
+  paidOnly: boolean;
+}
+
+export const AI_MODELS: AIModel[] = [
+  {
+    id: "gemini-2.5-flash-image",
+    name: "Gemini 2.5 Flash Image",
+    description: "GA · 1 290 tokens/img · fast & cost-effective",
+    provider: 'gemini',
+    bestFor: ["Minimalist", "Bold & Graphic", "Illustrated", "Photorealistic", "Tech/Futuristic"],
+    paidOnly: false,
+  },
+  {
+    id: "gemini-3.1-flash-image-preview",
+    name: "Gemini 3.1 Flash Image",
+    description: "Preview · 2 520 tokens/img · enhanced quality",
+    provider: 'gemini',
+    bestFor: ["Bold & Graphic", "Tech/Futuristic", "Illustrated", "Photorealistic"],
+    paidOnly: true,
+  },
+  {
+    id: "gemini-3-pro-image-preview",
+    name: "Gemini 3 Pro Image",
+    description: "Preview · highest fidelity, complex multi-turn",
+    provider: 'gemini',
+    bestFor: ["Tech/Futuristic", "Bold & Graphic", "Illustrated", "Photorealistic"],
+    paidOnly: true,
+  },
+  // ── FLUX / Replicate — commented out pending future migration ───────────────
+  // { id: "black-forest-labs/flux-schnell", name: "FLUX Schnell",
+  //   description: "Ultra-fast FLUX generation, 4 steps", provider: 'flux',
+  //   bestFor: ["Bold & Graphic", "Minimalist", "Illustrated", "Photorealistic", "Tech/Futuristic"], paidOnly: false },
+  // { id: "black-forest-labs/flux-pro", name: "FLUX Pro",
+  //   description: "Professional FLUX, photorealistic detail", provider: 'flux',
+  //   bestFor: ["Photorealistic", "Tech/Futuristic", "Bold & Graphic", "Illustrated"], paidOnly: true },
+];
+
 export const colorSchemes = [
     { id: "vibrant", name: "Vibrant", colors: ["#FF6B6B", "#4ECDC4", "#45B7D1"] },
     { id: "sunset", name: "Sunset", colors: ["#FF8C42", "#FF3C38", "#A23B72"] },
@@ -38,6 +85,7 @@ export interface IThumbnail {
     image_url?: string;
     prompt_used?: string;
     user_prompt?: string;
+    model?: string;
     isGenerating?: boolean;
     createdAt?: Date;
     updatedAt?: Date;
@@ -47,6 +95,7 @@ export interface IUser {
     name: string;
     email: string;
     password?: string;
+    plan?: 'free' | 'basic' | 'pro' | 'enterprise';
     createdAt?: Date;
     updatedAt?: Date;
 }

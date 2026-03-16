@@ -1,7 +1,9 @@
 import { DownloadIcon, ImageIcon, Loader2Icon } from "lucide-react";
 import type { AspectRatio, IThumbnail } from "../assets/assets";
+import { useTranslation } from "../hooks/useTranslation";
 
 const PreviewPanel = ({ thumbnail, isLoading, aspectRatio }: { thumbnail: IThumbnail | null, isLoading: boolean; aspectRatio: AspectRatio }) => {
+    const { t } = useTranslation();
 
     const aspectClasses = {
         "16:9": "aspect-video",
@@ -25,8 +27,8 @@ const PreviewPanel = ({ thumbnail, isLoading, aspectRatio }: { thumbnail: IThumb
                     <div>
                         <Loader2Icon className="animate-spin size-8 text-zinc-400" />
                         <div className="text-center">
-                            <p className="text-sm font-medium text-zinc-200">AI is generating your thumbnail...</p>
-                            <p className="mt-1 text-xs text-zinc-400">This may take 10-20 seconds</p>
+                            <p className="text-sm font-medium text-zinc-200">{t('preview.generating')}</p>
+                            <p className="mt-1 text-xs text-zinc-400">{t('preview.generatingTime')}</p>
                         </div>
                     </div>
                 )}
@@ -41,7 +43,7 @@ const PreviewPanel = ({ thumbnail, isLoading, aspectRatio }: { thumbnail: IThumb
                         <div className="absolute inset-0 flex items-end justify-center bg-black/10 opacity-0 transition-opacity group-hover:opacity-100">
                             <button onClick={onDownload} type="button" className="mb-6 flex items-center gap-2 rounded-md px-5 py-2.5 text-xs font-medium transition bg-white/30 ring-2 ring-white/40 backdrop-blur hover:scale-105 active:scale-95">
                                 <DownloadIcon className="size-4" />
-                                Download Thumbnail
+                                {t('preview.download')}
                             </button>
                         </div>
                     </div>
@@ -55,8 +57,8 @@ const PreviewPanel = ({ thumbnail, isLoading, aspectRatio }: { thumbnail: IThumb
                         </div>
 
                         <div className="px-4 text-center">
-                            <p className="font text-zinc-200">Generate your first thumbnail</p>
-                            <p className="mt-1 text-xs text-zinc-400">Fill out the form and click generate</p>
+                            <p className="font text-zinc-200">{t('preview.emptyTitle')}</p>
+                            <p className="mt-1 text-xs text-zinc-400">{t('preview.emptySubtitle')}</p>
                         </div>
                     </div>
                 )}

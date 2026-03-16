@@ -5,16 +5,14 @@ import { motion } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import heroImage from "../assets/copilotheader.jpg";
+import { useTranslation } from "../hooks/useTranslation";
 
 export default function HeroSection() {
 
     const navigate = useNavigate();
     const { isLoggedIn } = useAuth();
-    const specialFeatures = [
-        "No deasign skills needed",
-        "Fast generation",
-        "Hight CTR templates",
-    ];
+    const { t } = useTranslation();
+    const specialFeatures = [t('hero.feature1'), t('hero.feature2'), t('hero.feature3')];
 
     return (
         <div className="relative flex flex-col items-center justify-center px-4 md:px-16 lg:px-24 xl:px-32">
@@ -28,10 +26,10 @@ export default function HeroSection() {
                 transition={{ delay: 0.2, type: "spring", stiffness: 320, damping: 70, mass: 1 }}
             >
                 <span className="bg-red-800 text-white text-md px-3.5 py-1 rounded-full">
-                    {isLoggedIn ? "Click" : "Login"}
+                    {isLoggedIn ? t('hero.badgeLoggedIn') : t('hero.badgeGuest')}
                 </span>
                 <p className="flex items-center gap-1">
-                    <span> for your first thumbnail for free </span>
+                    <span>{t('hero.badgeText')}</span>
                     <ChevronRightIcon size={16} className="group-hover:translate-x-0.5 transition duration-300" />
                 </p>
             </motion.a>
@@ -58,7 +56,7 @@ export default function HeroSection() {
                 viewport={{ once: true }}
                 transition={{ delay: 0.2, type: "spring", stiffness: 320, damping: 70, mass: 1 }}
             >
-                Stop wasting hours creating thumbnails manually. Get high-quality thumbnails in seconds with our advanced AI.</motion.p>
+                {t('hero.description')}</motion.p>
             <motion.div className="flex items-center gap-4 mt-8"
                 initial={{ y: 50, opacity: 0 }}
                 whileInView={{ y: 0, opacity: 1 }}
@@ -66,11 +64,11 @@ export default function HeroSection() {
                 transition={{ type: "spring", stiffness: 320, damping: 70, mass: 1 }}
             >
                 <button onClick={() => navigate('/generate')} className="bg-red-600 hover:bg-red-700 text-white rounded-full px-7 h-11">
-                    Generate now
+                    {t('hero.generateButton')}
                 </button>
                 <button onClick={() => window.location.href = 'https://alecam.dev'} className="flex items-center gap-2 border border-red-900 hover:bg-red-950/50 transition rounded-full px-6 h-11">
                     <BriefcaseBusiness strokeWidth={1} />
-                    <span>See how I work</span>
+                    <span>{t('hero.seeHowButton')}</span>
                 </button>
             </motion.div>
 

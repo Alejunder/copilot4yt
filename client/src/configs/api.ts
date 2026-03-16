@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getLocale, translateBackendError } from '../utils/i18n';
 
 /**
  * Auth strategy: JWT stored in localStorage, sent as Authorization: Bearer <token>.
@@ -17,28 +18,43 @@ const api = axios.create({
   },
 });
 
-// Request interceptor: attach JWT from localStorage to every request
+// Request interceptor: attach JWT and Accept-Language to every request
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
     config.headers['Authorization'] = `Bearer ${token}`;
   }
+
+  // Tell the server which language the user prefers so it can log/pick locale.
+  // The server never returns translated text — it returns error codes — but the
+  // header lets the backend attach locale context for logging and future use.
+  config.headers['Accept-Language'] = getLocale();
+
   return config;
 });
 
-// Response interceptor: handle authentication errors globally
+// Response interceptor: translate backend error codes and handle auth failures
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // If the API returned a machine-readable error code, translate it here so
+    // every call-site can simply read `error.localizedMessage` without
+    // needing to call translateBackendError() themselves.
+    const errorCode: string | undefined = error.response?.data?.errorCode;
+    if (errorCode) {
+      error.localizedMessage = translateBackendError(errorCode);
+    }
+
     if (error.response?.status === 401) {
       // Token is invalid or expired — clear it and notify AuthContext
       if (!error.config?.url?.includes('/api/auth/verify')) {
         localStorage.removeItem('token');
         window.dispatchEvent(new CustomEvent('auth-error', {
-          detail: { message: error.response?.data?.message || 'Session expired' }
+          detail: { message: error.localizedMessage || error.response?.data?.message || 'Session expired' }
         }));
       }
     }
+
     return Promise.reject(error);
   }
 );

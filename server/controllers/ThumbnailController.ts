@@ -1,9 +1,49 @@
 import { Request, Response } from "express";
 import Thumbnail from "../models/Thumbnail.js";
+import Credits from "../models/Credits.js";
+import User from "../models/User.js";
 import { v2 as cloudinary } from "cloudinary";
+import { PLAN_BENEFITS } from "../configs/planBenefits.js";
+import vertexAI, {
+  ALL_GEMINI_MODELS,
+  DEFAULT_GEMINI_MODEL,
+  isPlanAllowed,
+  type Plan,
+} from "../configs/ai.js";
+import type { Part } from "@google-cloud/vertexai";
+import sharp from "sharp";
+import path from "path";
+import { fileURLToPath } from "url";
 
-const GEMINI_MODEL = "gemini-3.1-flash-image-preview";
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const WATERMARK_PATH = path.join(__dirname, "../images/watermark.png");
+
+async function applyWatermark(imageBuffer: Buffer): Promise<Buffer> {
+  const metadata = await sharp(imageBuffer).metadata();
+  const imageWidth = metadata.width ?? 1280;
+  const watermarkWidth = Math.round(imageWidth * 0.18);
+
+  const resizedWatermark = await sharp(WATERMARK_PATH)
+    .resize(watermarkWidth)
+    .toBuffer();
+
+  return sharp(imageBuffer)
+    .composite([{ input: resizedWatermark, gravity: "southeast" }])
+    .toBuffer();
+}
+
+const GENERATION_COST = 10;
+
+// ── FLUX / Replicate constants — commented out pending future migration ──────
+// const FLUX_FREE_MODEL          = "black-forest-labs/flux-schnell";
+// const FLUX_PRO_MODEL           = "black-forest-labs/flux-pro";
+// const ALL_VALID_FLUX_MODELS    = new Set([FLUX_FREE_MODEL, FLUX_PRO_MODEL]);
+// const FLUX_DIMENSIONS: Record<string, { width: number; height: number }> = {
+//   "16:9": { width: 1280, height: 720 },
+//   "1:1":  { width: 1024, height: 1024 },
+//   "9:16": { width: 720,  height: 1280 },
+// };
 
 const stylePrompts: Record<string, string> = {
   "Bold & Graphic":
@@ -29,7 +69,49 @@ const colorSchemeDescriptions = {
     pastel: 'soft pastel colors, low saturation, gentle tones, calm and friendly aesthetic',
 }
 
+/** Upload a buffer to Cloudinary and return the secure URL. */
+async function uploadToCloudinary(buffer: Buffer): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { resource_type: "image", folder: "thumbnails" },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve((result as any).secure_url);
+      }
+    );
+    stream.end(buffer);
+  });
+}
+
+/** Build the generation prompt from the form inputs. */
+function buildPrompt(
+  title: string,
+  style: string,
+  aspectLabel: string,
+  color_scheme?: string,
+  user_prompt?: string,
+  hasReferenceImage = false
+): string {
+  const styleDesc = stylePrompts[style as keyof typeof stylePrompts];
+  const base = hasReferenceImage
+    ? `Using the reference image provided as inspiration, create a ${styleDesc} for: "${title}". Use similar composition, style elements, or visual themes from the reference image.`
+    : `Create a ${styleDesc} for: "${title}"`;
+
+  let prompt = base;
+  if (color_scheme) {
+    prompt += ` Use a ${colorSchemeDescriptions[color_scheme as keyof typeof colorSchemeDescriptions]} color scheme.`;
+  }
+  if (user_prompt) {
+    prompt += ` Additional details: ${user_prompt}`;
+  }
+  prompt += ` The thumbnail must use a ${aspectLabel} aspect ratio, visually stunning, and designed to maximize click-through rate. Make it bold, professional, and impossible to ignore.`;
+  return prompt;
+}
+
 export const generateThumbnail = async (req: Request, res: Response) => {
+  let creditsDeducted = false;
+  let thumbnailId: string | null = null;
+
   try {
     const userId = (req as any).userId;
     const {
@@ -39,10 +121,77 @@ export const generateThumbnail = async (req: Request, res: Response) => {
       aspect_ratio,
       color_scheme,
       text_overlay,
+      model,
     } = req.body;
 
-    // Get the uploaded file from multer
+    if (!process.env.GOOGLE_CLOUD_PROJECT) {
+      console.error("GOOGLE_CLOUD_PROJECT is not set");
+      res.status(500).json({ message: "Server configuration error" });
+      return;
+    }
+
+    if (!title?.trim()) {
+      res.status(400).json({ message: "Title is required" });
+      return;
+    }
+    if (!style || !stylePrompts[style as keyof typeof stylePrompts]) {
+      res.status(400).json({ message: "Invalid or missing thumbnail style" });
+      return;
+    }
+
+    const selectedModel: string = model || DEFAULT_GEMINI_MODEL;
+
+    if (!ALL_GEMINI_MODELS.has(selectedModel)) {
+      res.status(400).json({ message: "Invalid model selected" });
+      return;
+    }
+
     const referenceImage = (req as any).file;
+
+    // Expire plan if 30-day window has passed before checking access
+    const userDoc = await User.findById(userId).select("plan planExpiresAt");
+    if (userDoc && userDoc.plan !== "free" && userDoc.planExpiresAt && userDoc.planExpiresAt < new Date()) {
+      await User.findByIdAndUpdate(userId, { $set: { plan: "free", planExpiresAt: null } });
+      await Credits.findOneAndUpdate({ userId }, { $set: { plan: "free" } });
+    }
+
+    const effectivePlan = ((await Credits.findOne({ userId }))?.plan ?? "free") as keyof typeof PLAN_BENEFITS;
+    const benefits = PLAN_BENEFITS[effectivePlan];
+
+    if (!isPlanAllowed(selectedModel, effectivePlan as Plan)) {
+      res.status(403).json({ message: "This model requires a higher-tier plan. Please upgrade to access it." });
+      return;
+    }
+
+    if (referenceImage && !benefits.referenceImageAllowed) {
+      res.status(403).json({ message: "Reference image uploads require a paid plan. Please upgrade to use this feature." });
+      return;
+    }
+
+    if (effectivePlan === "free") {
+      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      await Credits.findOneAndUpdate(
+        {
+          userId,
+          $or: [
+            { lastDailyCreditReset: { $exists: false } },
+            { lastDailyCreditReset: { $lt: twentyFourHoursAgo } },
+          ],
+        },
+        {
+          $set: { credits: 20, plan: "free", lastDailyCreditReset: new Date() },
+          $setOnInsert: { userId },
+        },
+        { upsert: true }
+      );
+    }
+
+    const credits = await Credits.findOne({ userId });
+
+    if (!credits || credits.credits < GENERATION_COST) {
+      res.status(403).json({ message: "Not enough credits" });
+      return;
+    }
 
     const thumbnail = await Thumbnail.create({
       userId,
@@ -53,110 +202,132 @@ export const generateThumbnail = async (req: Request, res: Response) => {
       aspect_ratio,
       color_scheme,
       text_overlay,
+      model: selectedModel,
       isGenerating: true,
     });
+    thumbnailId = thumbnail._id as string;
 
-    // gemini-3.1-flash-image-preview: supports responseModalities + imageConfig.
-    // We call the REST API directly with fetch instead of the @google/genai SDK because
-    // the SDK maps GenerateContentConfig incorrectly for image generation models,
-    // consistently producing IMAGE_OTHER / NO_IMAGE despite the REST API working fine.
+    credits.credits -= GENERATION_COST;
+    await credits.save();
+    creditsDeducted = true;
 
-    // Build the prompt
-    let prompt = `Create a ${stylePrompts[style as keyof typeof stylePrompts]} for: "${title}"`;
-    if (color_scheme) {
-      prompt += ` Use a ${colorSchemeDescriptions[color_scheme as keyof typeof colorSchemeDescriptions]} color scheme.`;
-    }
-    if (user_prompt) {
-      prompt += ` Additional details: ${user_prompt}`;
-    }
-    const aspectLabel = aspect_ratio === '16:9' ? 'widescreen 16:9' : aspect_ratio === '9:16' ? 'vertical 9:16' : aspect_ratio === '1:1' ? 'square 1:1' : (aspect_ratio || '16:9');
-    prompt += ` The thumbnail must use a ${aspectLabel} aspect ratio, visually stunning, and designed to maximize click-through rate. Make it bold, professional, and impossible to ignore.`;
+    const aspectLabel = aspect_ratio === '16:9' ? 'widescreen 16:9'
+      : aspect_ratio === '9:16' ? 'vertical 9:16'
+      : aspect_ratio === '1:1' ? 'square 1:1'
+      : (aspect_ratio || '16:9');
+    const hasReferenceImage = !!(referenceImage && referenceImage.buffer);
+    const prompt = buildPrompt(title, style, aspectLabel, color_scheme, user_prompt, hasReferenceImage);
 
-    // Build content parts (text + optional reference image)
-    const contentParts: any[] = [];
+    // ── FLUX / Replicate generation path — commented out pending migration ────
+    // if (provider === "flux") {
+    //   const fluxModel = selectedModel as `${string}/${string}`;
+    //   const isProModel = selectedModel === FLUX_PRO_MODEL;
+    //   const dimensions = FLUX_DIMENSIONS[aspect_ratio] ?? FLUX_DIMENSIONS["16:9"];
+    //   const fluxInput = isProModel
+    //     ? { prompt, width: dimensions.width, height: dimensions.height }
+    //     : { prompt, aspect_ratio: aspect_ratio || "16:9" };
+    //   const fluxOutput = await replicate.run(fluxModel, { input: fluxInput });
+    //   // ... (normalise output, upload, return)
+    //   return;
+    // }
+
+    const contentParts: Part[] = [];
     if (referenceImage && referenceImage.buffer) {
-      prompt = `Using the reference image provided as inspiration, create a ${stylePrompts[style as keyof typeof stylePrompts]} for: "${title}". Use similar composition, style elements, or visual themes from the reference image.`;
-      if (color_scheme) {
-        prompt += ` Use a ${colorSchemeDescriptions[color_scheme as keyof typeof colorSchemeDescriptions]} color scheme.`;
-      }
-      if (user_prompt) {
-        prompt += ` Additional details: ${user_prompt}`;
-      }
-      prompt += ` The thumbnail must use a ${aspectLabel} aspect ratio, visually stunning, and designed to maximize click-through rate. Make it bold, professional, and impossible to ignore.`;
       contentParts.push({
         inlineData: {
           mimeType: referenceImage.mimetype,
-          data: referenceImage.buffer.toString("base64"),
+          data: (referenceImage.buffer as Buffer).toString("base64"),
         },
       });
     }
     contentParts.push({ text: prompt });
 
-    const geminiRequestBody = {
+    const generativeModel = vertexAI.getGenerativeModel({ model: selectedModel });
+
+    const sdkResult = await generativeModel.generateContent({
       contents: [{ role: "user", parts: contentParts }],
       generationConfig: {
-        // Both TEXT and IMAGE are required — IMAGE alone causes IMAGE_OTHER on most models.
-        // imageConfig.aspectRatio is not a valid REST API field; aspect ratio goes in the prompt.
         responseModalities: ["TEXT", "IMAGE"],
-      },
-    };
+      } as Record<string, unknown>,
+    });
 
-    const geminiResponse = await fetch(
-      `${GEMINI_API_URL}?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(geminiRequestBody),
-      }
-    );
+    const response = sdkResult.response;
 
-    const response: any = await geminiResponse.json();
-
-    // Check if the response is valid
     if (!response?.candidates?.[0]?.content?.parts) {
-        console.error('Gemini raw response:', JSON.stringify(response, null, 2));
-        const reason = response?.candidates?.[0]?.finishReason || response?.error?.message || "unknown";
-        throw new Error(`Gemini returned no content parts (reason: ${reason})`);
+      console.error("Vertex AI raw response:", JSON.stringify(response, null, 2));
+      const reason =
+        response?.candidates?.[0]?.finishReason ??
+        (response as any)?.error?.message ??
+        "unknown";
+      throw new Error(`Vertex AI returned no content parts (reason: ${reason})`);
     }
 
-    const parts = response.candidates[0].content.parts;
+    const parts = response.candidates[0].content.parts as Part[];
 
     let finalBuffer: Buffer | null = null;
     for (const part of parts) {
-      // Skip thought parts (present in thinking models like gemini-3-pro-image-preview)
-      if (part.thought) continue;
+      if ((part as any).thought) continue;
       if (part.inlineData?.data) {
         finalBuffer = Buffer.from(part.inlineData.data, "base64");
       }
     }
 
     if (!finalBuffer) {
-        console.error('Parts received:', JSON.stringify(parts.map((p: any) => ({ hasInlineData: !!p.inlineData, hasText: !!p.text, thought: !!p.thought })), null, 2));
-        throw new Error("Gemini returned no image in response");
+      console.error(
+        "Parts received:",
+        JSON.stringify(
+          parts.map((p) => ({
+            hasInlineData: !!(p as any).inlineData,
+            hasText: !!(p as any).text,
+            thought: !!(p as any).thought,
+          })),
+          null,
+          2
+        )
+      );
+      throw new Error("Vertex AI returned no image in response");
     }
 
-    // Upload directly to Cloudinary from buffer (Vercel-compatible)
-    const uploadResult = await new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        { resource_type: "image", folder: "thumbnails" },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        }
-      );
-      uploadStream.end(finalBuffer!);
-    });
+    let uploadBuffer: Buffer = finalBuffer;
+    if (effectivePlan === "free") {
+      try {
+        uploadBuffer = await applyWatermark(finalBuffer);
+      } catch (wmErr) {
+        console.error("Watermark failed — falling back to original image:", wmErr);
+      }
+    }
 
-    thumbnail.image_url = (uploadResult as any).secure_url;
+    const secureUrl = await uploadToCloudinary(uploadBuffer);
+    thumbnail.image_url = secureUrl;
     thumbnail.isGenerating = false;
     await thumbnail.save();
 
-    res.json({message : "Thumbnail generated ", thumbnail })
+    res.json({ message: "Thumbnail generated", thumbnail });
 
 
   } catch (error: any) {
-    console.log(error);
-    res.status(500).json({ message: error.message});
+    console.error("generateThumbnail error:", error);
+
+    if (creditsDeducted) {
+      try {
+        await Credits.findOneAndUpdate(
+          { userId: (req as any).userId },
+          { $inc: { credits: GENERATION_COST } }
+        );
+      } catch (refundErr) {
+        console.error("Failed to refund credits after generation error:", refundErr);
+      }
+    }
+
+    if (thumbnailId) {
+      try {
+        await Thumbnail.findByIdAndDelete(thumbnailId);
+      } catch (cleanupErr) {
+        console.error("Failed to clean up orphaned thumbnail:", cleanupErr);
+      }
+    }
+
+    res.status(500).json({ message: error.message });
   }
 };
 

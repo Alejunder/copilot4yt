@@ -13,6 +13,7 @@ export interface IThumbnail extends Document {
     image_url?: string;
     prompt_used?: string;
     user_prompt?: string;
+    model?: string;
     isGenerating?: boolean;
     createdAt?: Date;
     updatedAt?: Date;
@@ -38,6 +39,7 @@ const ThumbnailSchema = new mongoose.Schema<IThumbnail>({
     image_url: {type: String, default: ""},
     prompt_used: {type: String},
     user_prompt: {type: String},
+    model: {type: String},
     isGenerating: {type: Boolean , default: true},
 })
 

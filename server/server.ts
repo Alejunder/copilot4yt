@@ -4,6 +4,9 @@ import connectDB from './configs/db.js';
 import AuthRouter from './routes/AuthRoutes.js';
 import ThumbnailRouter from './routes/ThumbnailRoutes.js';
 import UserRouter from './routes/UserRoutes.js';
+import BillingRouter from './routes/BillingRoutes.js';
+import { handleStripeWebhook } from './controllers/BillingController.js';
+import { i18nMiddleware } from './middlewares/i18n.js';
 
 // Connect to DB once on cold start; do not crash the module if it fails
 connectDB().catch((err) => console.error('MongoDB connection error:', err));
@@ -41,7 +44,13 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     next();
 });
 
+// Must be registered BEFORE express.json() so the raw Buffer is available for Stripe signature verification
+app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), handleStripeWebhook);
+
 app.use(express.json());
+
+// Attach req.locale from Accept-Language for all route handlers
+app.use(i18nMiddleware);
 
 app.set('trust proxy', 1);
 
@@ -51,6 +60,7 @@ app.get('/', (req: Request, res: Response) => {
 app.use('/api/auth', AuthRouter);
 app.use('/api/thumbnail', ThumbnailRouter);
 app.use('/api/user', UserRouter);
+app.use('/api/billing', BillingRouter);
 
 
 const port = process.env.PORT || 3000;

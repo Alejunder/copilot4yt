@@ -30,7 +30,7 @@ export const registerUser = async (req: Request, res: Response) => {
     return res.json({
       message: "User registered successfully",
       token,
-      user: { _id: newUser._id, name: newUser.name, email: newUser.email },
+      user: { _id: newUser._id, name: newUser.name, email: newUser.email, plan: newUser.plan },
     });
   } catch (error: any) {
     console.log(error);
@@ -57,7 +57,7 @@ export const loginUser = async (req: Request, res: Response) => {
     return res.json({
       message: "User Login successfully",
       token,
-      user: { _id: user._id, name: user.name, email: user.email },
+      user: { _id: user._id, name: user.name, email: user.email, plan: user.plan },
     });
   } catch (error: any) {
     console.log(error);

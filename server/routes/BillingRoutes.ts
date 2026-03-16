@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { createCheckoutSession, getCredits, verifySession } from "../controllers/BillingController";
-import protect from "../middlewares/auth";
+import { createCheckoutSession, getCredits, verifySession } from "../controllers/BillingController.js";
+import protect from "../middlewares/auth.js";
 
 const BillingRouter = Router();
 

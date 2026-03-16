@@ -1,12 +1,12 @@
 import { Request, Response } from "express";
 import Stripe from "stripe";
-import User from "../models/User";
-import Credits from "../models/Credits";
+import User from "../models/User.js";
+import Credits from "../models/Credits.js";
 import {
     createCheckoutSession as stripeCreateCheckoutSession,
     constructWebhookEvent,
     retrieveCheckoutSession,
-} from "../services/stripeService";
+} from "../services/stripeService.js";
 import type { Plan } from "../configs/planBenefits.js";
 
 const VALID_PLANS: Plan[] = ["basic", "pro", "enterprise"];

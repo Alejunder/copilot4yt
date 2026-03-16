@@ -1,35 +1,12 @@
-import { VertexAI } from "@google-cloud/vertexai";
 // import Replicate from "replicate";
 
-const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT as string;
-const LOCATION   = process.env.GOOGLE_CLOUD_LOCATION ?? "us-central1";
-
-
-if (!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
-  console.warn("[ai] GOOGLE_APPLICATION_CREDENTIALS_JSON is not set — Vertex AI calls will fail.");
+// Google AI Studio — plain API key, no GCP project or credentials required.
+if (!process.env.GEMINI_API_KEY) {
+  console.warn("[ai] GEMINI_API_KEY is not set — AI generation calls will fail.");
 }
 
-let parsedCredentials: Record<string, unknown> | undefined;
-try {
-  const raw = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON ?? "{}");
-  // Vercel stores multiline secrets with literal \n — restore real newlines
-  // in the RSA private key or the JWT signature will be invalid.
-  if (raw.private_key) {
-    raw.private_key = (raw.private_key as string).replace(/\\n/g, "\n");
-  }
-  parsedCredentials = raw;
-} catch {
-  console.error("[ai] GOOGLE_APPLICATION_CREDENTIALS_JSON is not valid JSON — Vertex AI calls will fail.");
-}
-
-const vertexAI = new VertexAI({
-  project: PROJECT_ID,
-  location: LOCATION,
-  googleAuthOptions: {
-    scopes: "https://www.googleapis.com/auth/cloud-platform",
-    credentials: parsedCredentials,
-  },
-});
+export const GEMINI_API_KEY  = process.env.GEMINI_API_KEY as string;
+export const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 
 // export const replicate = new Replicate({
 //   auth: process.env.REPLICATE_API_TOKEN as string,
@@ -73,5 +50,3 @@ export function isPlanAllowed(model: string, plan: Plan): boolean {
 //   "1:1":  { width: 1024, height: 1024 },
 //   "9:16": { width: 720,  height: 1280 },
 // };
-
-export default vertexAI;

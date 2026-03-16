@@ -4,13 +4,20 @@ import Credits from "../models/Credits.js";
 import User from "../models/User.js";
 import { v2 as cloudinary } from "cloudinary";
 import { PLAN_BENEFITS } from "../configs/planBenefits.js";
-import vertexAI, {
+import {
+  GEMINI_API_KEY,
+  GEMINI_BASE_URL,
   ALL_GEMINI_MODELS,
   DEFAULT_GEMINI_MODEL,
   isPlanAllowed,
   type Plan,
 } from "../configs/ai.js";
-import type { Part } from "@google-cloud/vertexai";
+
+interface GeminiPart {
+  text?: string;
+  inlineData?: { mimeType: string; data: string };
+  thought?: boolean;
+}
 import sharp from "sharp";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -124,8 +131,8 @@ export const generateThumbnail = async (req: Request, res: Response) => {
       model,
     } = req.body;
 
-    if (!process.env.GOOGLE_CLOUD_PROJECT) {
-      console.error("GOOGLE_CLOUD_PROJECT is not set");
+    if (!process.env.GEMINI_API_KEY) {
+      console.error("GEMINI_API_KEY is not set");
       res.status(500).json({ message: "Server configuration error" });
       return;
     }
@@ -231,7 +238,7 @@ export const generateThumbnail = async (req: Request, res: Response) => {
     //   return;
     // }
 
-    const contentParts: Part[] = [];
+    const contentParts: GeminiPart[] = [];
     if (referenceImage && referenceImage.buffer) {
       contentParts.push({
         inlineData: {
@@ -242,31 +249,45 @@ export const generateThumbnail = async (req: Request, res: Response) => {
     }
     contentParts.push({ text: prompt });
 
-    const generativeModel = vertexAI.getGenerativeModel({ model: selectedModel });
+    const geminiRes = await fetch(
+      `${GEMINI_BASE_URL}/${selectedModel}:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: contentParts }],
+          generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
+        }),
+      }
+    );
 
-    const sdkResult = await generativeModel.generateContent({
-      contents: [{ role: "user", parts: contentParts }],
-      generationConfig: {
-        responseModalities: ["TEXT", "IMAGE"],
-      } as Record<string, unknown>,
-    });
-
-    const response = sdkResult.response;
-
-    if (!response?.candidates?.[0]?.content?.parts) {
-      console.error("Vertex AI raw response:", JSON.stringify(response, null, 2));
-      const reason =
-        response?.candidates?.[0]?.finishReason ??
-        (response as any)?.error?.message ??
-        "unknown";
-      throw new Error(`Vertex AI returned no content parts (reason: ${reason})`);
+    if (!geminiRes.ok) {
+      const errBody = await geminiRes.text();
+      throw new Error(`Gemini API error ${geminiRes.status}: ${errBody}`);
     }
 
-    const parts = response.candidates[0].content.parts as Part[];
+    const data = await geminiRes.json() as {
+      candidates?: Array<{
+        content?: { parts?: GeminiPart[] };
+        finishReason?: string;
+      }>;
+      error?: { message: string };
+    };
+
+    if (!data?.candidates?.[0]?.content?.parts) {
+      console.error("Gemini raw response:", JSON.stringify(data, null, 2));
+      const reason =
+        data?.candidates?.[0]?.finishReason ??
+        data?.error?.message ??
+        "unknown";
+      throw new Error(`Gemini returned no content parts (reason: ${reason})`);
+    }
+
+    const parts = data.candidates[0].content.parts!;
 
     let finalBuffer: Buffer | null = null;
     for (const part of parts) {
-      if ((part as any).thought) continue;
+      if (part.thought) continue;
       if (part.inlineData?.data) {
         finalBuffer = Buffer.from(part.inlineData.data, "base64");
       }
@@ -277,15 +298,15 @@ export const generateThumbnail = async (req: Request, res: Response) => {
         "Parts received:",
         JSON.stringify(
           parts.map((p) => ({
-            hasInlineData: !!(p as any).inlineData,
-            hasText: !!(p as any).text,
-            thought: !!(p as any).thought,
+            hasInlineData: !!p.inlineData,
+            hasText: !!p.text,
+            thought: !!p.thought,
           })),
           null,
           2
         )
       );
-      throw new Error("Vertex AI returned no image in response");
+      throw new Error("Gemini returned no image in response");
     }
 
     let uploadBuffer: Buffer = finalBuffer;

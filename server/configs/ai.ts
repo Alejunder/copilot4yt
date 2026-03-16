@@ -1,17 +1,27 @@
 import { VertexAI } from "@google-cloud/vertexai";
 // import Replicate from "replicate";
 
-const PROJECT_ID   = process.env.GOOGLE_CLOUD_PROJECT as string;
-const LOCATION     = process.env.GOOGLE_CLOUD_LOCATION ?? "us-central1";
-// GOOGLE_APPLICATION_CREDENTIALS is read automatically by the Google Auth
-// Library from the environment — no explicit passing is needed.
-// Set it in .env (dev) or via the runtime environment / Workload Identity (prod).
-// e.g. GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account.json"
-if (!process.env.GOOGLE_APPLICATION_CREDENTIALS && !process.env.GOOGLE_CLOUD_PROJECT) {
-  console.warn("[ai] Neither GOOGLE_APPLICATION_CREDENTIALS nor GOOGLE_CLOUD_PROJECT is set — Vertex AI calls will fail.");
+const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT as string;
+const LOCATION   = process.env.GOOGLE_CLOUD_LOCATION ?? "us-central1";
+
+
+const googleAuthOptions: Record<string, unknown> = {
+  scopes: "https://www.googleapis.com/auth/cloud-platform",
+};
+
+if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+  try {
+    googleAuthOptions.credentials = JSON.parse(
+      process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON
+    );
+  } catch {
+    console.error("[ai] GOOGLE_APPLICATION_CREDENTIALS_JSON is not valid JSON — Vertex AI calls will fail.");
+  }
+} else if (!process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+  console.warn("[ai] No credential source found (GOOGLE_APPLICATION_CREDENTIALS_JSON or GOOGLE_APPLICATION_CREDENTIALS) — Vertex AI calls will fail.");
 }
 
-const vertexAI = new VertexAI({ project: PROJECT_ID, location: LOCATION });
+const vertexAI = new VertexAI({ project: PROJECT_ID, location: LOCATION, googleAuthOptions });
 
 // export const replicate = new Replicate({
 //   auth: process.env.REPLICATE_API_TOKEN as string,

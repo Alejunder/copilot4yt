@@ -8,7 +8,7 @@ import BillingRouter from './routes/BillingRoutes.js';
 import { handleStripeWebhook } from './controllers/BillingController.js';
 import { i18nMiddleware } from './middlewares/i18n.js';
 
-// Connect to DB once on cold start; do not crash the module if it fails
+// Warm up the connection on cold start (best-effort).
 connectDB().catch((err) => console.error('MongoDB connection error:', err));
 
 const app = express();
@@ -57,6 +57,18 @@ app.set('trust proxy', 1);
 app.get('/', (req: Request, res: Response) => {
     res.send('Server is Live!');
 });
+// Ensure the DB connection is ready before every request.
+// This is required on Vercel serverless where the module-level connectDB()
+// may not have resolved by the time the first request arrives.
+app.use(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        await connectDB();
+        next();
+    } catch (err) {
+        next(err);
+    }
+});
+
 app.use('/api/auth', AuthRouter);
 app.use('/api/thumbnail', ThumbnailRouter);
 app.use('/api/user', UserRouter);

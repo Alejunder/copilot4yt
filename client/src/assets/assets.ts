@@ -9,13 +9,9 @@ export type ThumbnailStyle = (typeof thumbnailStyles)[number];
 export interface AIModel {
   id: string;
   name: string;
-  /** Short description shown in the selector */
   description: string;
-  /** AI provider — used for grouping in the dropdown */
   provider: 'gemini' | 'flux';
-  /** Thumbnail styles this model excels at */
   bestFor: ThumbnailStyle[];
-  /** Requires a paid plan */
   paidOnly: boolean;
 }
 
@@ -44,13 +40,7 @@ export const AI_MODELS: AIModel[] = [
     bestFor: ["Tech/Futuristic", "Bold & Graphic", "Illustrated", "Photorealistic"],
     paidOnly: true,
   },
-  // ── FLUX / Replicate — commented out pending future migration ───────────────
-  // { id: "black-forest-labs/flux-schnell", name: "FLUX Schnell",
-  //   description: "Ultra-fast FLUX generation, 4 steps", provider: 'flux',
-  //   bestFor: ["Bold & Graphic", "Minimalist", "Illustrated", "Photorealistic", "Tech/Futuristic"], paidOnly: false },
-  // { id: "black-forest-labs/flux-pro", name: "FLUX Pro",
-  //   description: "Professional FLUX, photorealistic detail", provider: 'flux',
-  //   bestFor: ["Photorealistic", "Tech/Futuristic", "Bold & Graphic", "Illustrated"], paidOnly: true },
+
 ];
 
 export const colorSchemes = [

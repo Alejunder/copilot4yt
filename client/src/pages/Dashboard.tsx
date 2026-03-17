@@ -16,7 +16,6 @@ export default function Dashboard() {
     const { t } = useTranslation();
     const [searchParams] = useSearchParams();
 
-    // Override hook values once session verification resolves
     const [verifiedCredits, setVerifiedCredits] = useState<number | null>(null);
     const [verifiedPlan, setVerifiedPlan] = useState<string | null>(null);
     const [verifying, setVerifying] = useState(false);
@@ -29,7 +28,6 @@ export default function Dashboard() {
         api.get(`/api/billing/verify-session?session_id=${sessionId}`)
             .then(async ({ data }) => {
                 if (data.data?.upgraded) {
-                    // Re-fetch credits both locally (for this page) and globally (for the Navbar)
                     const [fresh] = await Promise.all([
                         api.get("/api/billing/credits"),
                         fetchCredits(),
@@ -44,7 +42,6 @@ export default function Dashboard() {
             })
             .finally(() => {
                 setVerifying(false);
-                // Remove session_id from URL without adding a history entry
                 navigate("/dashboard", { replace: true });
             });
     }, []);

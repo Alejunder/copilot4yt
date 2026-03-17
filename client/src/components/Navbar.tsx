@@ -40,7 +40,6 @@ export default function Navbar() {
                 
                 <div className="flex items-center gap-2">
                     {isLoading ? (
-                        // Auth check in progress — render nothing to avoid flash of "Get Started"
                         <div className="hidden md:block w-28 h-9" />
                     ) : isLoggedIn ? (
                         <div className="flex items-center gap-3">

@@ -10,18 +10,15 @@ interface ModelSelectorProps {
   currentPlan: string;
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
-  /** Highlight models best suited for the currently selected style */
   currentStyle?: ThumbnailStyle;
 }
 
-// Mirrors the backend isPlanAllowed logic in server/configs/ai.ts
 const FREE_MODEL_IDS  = new Set(["gemini-2.5-flash-image"]);
 const BASIC_MODEL_IDS = new Set(["gemini-3.1-flash-image-preview"]);
 
 function isPlanAllowed(modelId: string, plan: string): boolean {
   if (FREE_MODEL_IDS.has(modelId))  return true;
   if (BASIC_MODEL_IDS.has(modelId)) return plan === "basic" || plan === "pro" || plan === "enterprise";
-  // PRO_MODELS (gemini-3-pro-image-preview): pro and enterprise only
   return plan === "pro" || plan === "enterprise";
 }
 
@@ -29,9 +26,6 @@ const modelIcons: Record<string, ReactNode> = {
   "gemini-2.5-flash-image":           <ZapIcon className="w-4 h-4" />,
   "gemini-3.1-flash-image-preview":   <CpuIcon className="w-4 h-4" />,
   "gemini-3-pro-image-preview":       <SparklesIcon className="w-4 h-4" />,
-  // FLUX models — commented out pending Replicate migration
-  // "black-forest-labs/flux-schnell": <ZapIcon className="w-4 h-4" />,
-  // "black-forest-labs/flux-pro":     <SparklesIcon className="w-4 h-4" />,
 };
 
 const modelDescKeys: Record<string, string> = {
@@ -77,7 +71,6 @@ const ModelSelector = ({ value, onChange, currentPlan, isOpen, setIsOpen, curren
         <div className="absolute z-50 mt-2 w-full rounded-md border border-white/12 bg-black/20 backdrop-blur-3xl shadow-lg">
           {(['gemini', 'flux'] as const).map((provider) => {
             const providerModels = AI_MODELS.filter(m => m.provider === provider);
-            // Skip providers that have no active models (e.g. flux while Replicate is disabled)
             if (providerModels.length === 0) return null;
             return (
               <div key={provider}>

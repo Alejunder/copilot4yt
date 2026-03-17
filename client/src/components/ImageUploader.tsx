@@ -15,13 +15,11 @@ function ImageUploader({ onImageSelect, disabled }: ImageUploaderProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         alert('Please select a valid image file');
         return;
       }
 
-      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         alert('Image size must be less than 5MB');
         return;
@@ -30,7 +28,6 @@ function ImageUploader({ onImageSelect, disabled }: ImageUploaderProps) {
       setFileName(file.name);
       onImageSelect(file);
 
-      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result as string);

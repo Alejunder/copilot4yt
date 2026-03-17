@@ -18,8 +18,6 @@ interface AuthContextProps {
     logout: () => Promise<void>;
 }
 
-// ─── Safe localStorage helpers ────────────────────────────────────────────────
-// iOS Safari in Private Browsing throws SecurityError on localStorage access.
 const safeGetToken = (): string | null => {
     try { return localStorage.getItem('token'); } catch { return null; }
 };
@@ -51,8 +49,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const [user,setUser] = useState<IUser | null>(null);
     const [isLoggedIn,setIsLoggedIn] = useState<boolean>(false);
-    // isLoading is true until the initial token verification completes.
-    // While true, no component should render "not authenticated" UI.
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [credits, setCredits] = useState<number | null>(null);
     const [plan, setPlan] = useState<string | null>(null);
@@ -64,9 +60,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setCredits(data.data.credits);
             setPlan(data.data.plan ?? null);
             setPlanExpiresAt(data.data.planExpiresAt ? new Date(data.data.planExpiresAt) : null);
-        } catch {
-            // silently fail — credits display is non-critical
-        }
+        } catch {}
     };
 
     const signUp = async ({ name, email, password }: { name: string, email: string, password: string }) => {
@@ -120,7 +114,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const fetchUser = async () => {
         const token = safeGetToken();
 
-        // No token → not logged in. Skip the network call entirely.
         if (!token) {
             setUser(null);
             setIsLoggedIn(false);
@@ -135,23 +128,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 setIsLoggedIn(true);
                 fetchCredits();
             } else {
-                // Backend explicitly said there's no user (malformed response)
                 safeRemoveToken();
                 setUser(null);
                 setIsLoggedIn(false);
             }
         } catch (error: any) {
-            // ─── CRITICAL: only clear the token for explicit 401 Unauthorized ───
-            // Network errors, Vercel cold-start timeouts, 500s, etc. must NOT
-            // clear a valid token. On iOS Safari with a mobile connection any
-            // transient failure would permanently log the user out otherwise.
             if (error.response?.status === 401) {
                 safeRemoveToken();
                 setUser(null);
                 setIsLoggedIn(false);
             }
-            // For network errors (error.response is undefined) we do nothing:
-            // the token is kept and the user stays in whatever state they were in.
         } finally {
             setIsLoading(false);
         }
@@ -162,7 +148,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         await fetchUser();
        })();
        
-       // Listen for authentication errors from API interceptor
        const handleAuthError = () => {
            setUser(null);
            setIsLoggedIn(false);

@@ -72,7 +72,6 @@ function Generate() {
 
     setShowUpgrade(false);
 
-    // If there's a reference image, show privacy warning first
     if (referenceImage) {
       setShowPrivacyModal(true);
     } else {

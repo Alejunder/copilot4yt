@@ -42,16 +42,6 @@ async function applyWatermark(imageBuffer: Buffer): Promise<Buffer> {
 
 const GENERATION_COST = 10;
 
-// ── FLUX / Replicate constants — commented out pending future migration ──────
-// const FLUX_FREE_MODEL          = "black-forest-labs/flux-schnell";
-// const FLUX_PRO_MODEL           = "black-forest-labs/flux-pro";
-// const ALL_VALID_FLUX_MODELS    = new Set([FLUX_FREE_MODEL, FLUX_PRO_MODEL]);
-// const FLUX_DIMENSIONS: Record<string, { width: number; height: number }> = {
-//   "16:9": { width: 1280, height: 720 },
-//   "1:1":  { width: 1024, height: 1024 },
-//   "9:16": { width: 720,  height: 1280 },
-// };
-
 const stylePrompts: Record<string, string> = {
   "Bold & Graphic":
     "eye-catching YouTube thumbnail, bold large typography text overlay, vibrant saturated colors, dramatic studio lighting, high contrast composition, dynamic diagonal layout, click-worthy visual hierarchy, professional graphic design",
@@ -76,7 +66,6 @@ const colorSchemeDescriptions = {
     pastel: 'soft pastel colors, low saturation, gentle tones, calm and friendly aesthetic',
 }
 
-/** Upload a buffer to Cloudinary and return the secure URL. */
 async function uploadToCloudinary(buffer: Buffer): Promise<string> {
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
@@ -90,7 +79,6 @@ async function uploadToCloudinary(buffer: Buffer): Promise<string> {
   });
 }
 
-/** Build the generation prompt from the form inputs. */
 function buildPrompt(
   title: string,
   style: string,
@@ -155,7 +143,6 @@ export const generateThumbnail = async (req: Request, res: Response) => {
 
     const referenceImage = (req as any).file;
 
-    // Expire plan if 30-day window has passed before checking access
     const userDoc = await User.findById(userId).select("plan planExpiresAt");
     if (userDoc && userDoc.plan !== "free" && userDoc.planExpiresAt && userDoc.planExpiresAt < new Date()) {
       await User.findByIdAndUpdate(userId, { $set: { plan: "free", planExpiresAt: null } });
@@ -224,19 +211,6 @@ export const generateThumbnail = async (req: Request, res: Response) => {
       : (aspect_ratio || '16:9');
     const hasReferenceImage = !!(referenceImage && referenceImage.buffer);
     const prompt = buildPrompt(title, style, aspectLabel, color_scheme, user_prompt, hasReferenceImage);
-
-    // ── FLUX / Replicate generation path — commented out pending migration ────
-    // if (provider === "flux") {
-    //   const fluxModel = selectedModel as `${string}/${string}`;
-    //   const isProModel = selectedModel === FLUX_PRO_MODEL;
-    //   const dimensions = FLUX_DIMENSIONS[aspect_ratio] ?? FLUX_DIMENSIONS["16:9"];
-    //   const fluxInput = isProModel
-    //     ? { prompt, width: dimensions.width, height: dimensions.height }
-    //     : { prompt, aspect_ratio: aspect_ratio || "16:9" };
-    //   const fluxOutput = await replicate.run(fluxModel, { input: fluxInput });
-    //   // ... (normalise output, upload, return)
-    //   return;
-    // }
 
     const contentParts: GeminiPart[] = [];
     if (referenceImage && referenceImage.buffer) {

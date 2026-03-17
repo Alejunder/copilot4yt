@@ -1,16 +1,9 @@
-// import Replicate from "replicate";
-
-// Google AI Studio — plain API key, no GCP project or credentials required.
 if (!process.env.GEMINI_API_KEY) {
   console.warn("[ai] GEMINI_API_KEY is not set — AI generation calls will fail.");
 }
 
 export const GEMINI_API_KEY  = process.env.GEMINI_API_KEY as string;
 export const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
-
-// export const replicate = new Replicate({
-//   auth: process.env.REPLICATE_API_TOKEN as string,
-// });
 
 export const FREE_MODELS = new Set([
   "gemini-2.5-flash-image",
@@ -41,12 +34,3 @@ export function isPlanAllowed(model: string, plan: Plan): boolean {
   return false;
 }
 
-// ── FLUX / Replicate — commented out pending future migration ─────────────
-// const FLUX_FREE_MODEL          = "black-forest-labs/flux-schnell";
-// const FLUX_PRO_MODEL           = "black-forest-labs/flux-pro";
-// const ALL_VALID_FLUX_MODELS    = new Set([FLUX_FREE_MODEL, FLUX_PRO_MODEL]);
-// const FLUX_DIMENSIONS: Record<string, { width: number; height: number }> = {
-//   "16:9": { width: 1280, height: 720 },
-//   "1:1":  { width: 1024, height: 1024 },
-//   "9:16": { width: 720,  height: 1280 },
-// };

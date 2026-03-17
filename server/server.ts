@@ -8,17 +8,10 @@ import BillingRouter from './routes/BillingRoutes.js';
 import { handleStripeWebhook } from './controllers/BillingController.js';
 import { i18nMiddleware } from './middlewares/i18n.js';
 
-// Warm up the connection on cold start (best-effort).
 connectDB().catch((err) => console.error('MongoDB connection error:', err));
 
 const app = express();
 
-/**
- * CORS: only matters for local development.
- * In production, all /api/* requests come through Vercel's proxy rewrite
- * as server-to-server calls, so the browser never makes cross-origin requests.
- * Auth is now JWT-based (Authorization header), so no cookie issues at all.
- */
 const allowedOrigins = [
     'http://localhost:3000',
     'http://localhost:5173',
@@ -44,12 +37,10 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     next();
 });
 
-// Must be registered BEFORE express.json() so the raw Buffer is available for Stripe signature verification
 app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), handleStripeWebhook);
 
 app.use(express.json());
 
-// Attach req.locale from Accept-Language for all route handlers
 app.use(i18nMiddleware);
 
 app.set('trust proxy', 1);
@@ -57,9 +48,6 @@ app.set('trust proxy', 1);
 app.get('/', (req: Request, res: Response) => {
     res.send('Server is Live!');
 });
-// Ensure the DB connection is ready before every request.
-// This is required on Vercel serverless where the module-level connectDB()
-// may not have resolved by the time the first request arrives.
 app.use(async (req: Request, res: Response, next: NextFunction) => {
     try {
         await connectDB();

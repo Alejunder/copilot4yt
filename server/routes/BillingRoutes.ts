@@ -7,6 +7,5 @@ const BillingRouter = Router();
 BillingRouter.get("/credits", protect, getCredits);
 BillingRouter.post("/checkout", protect, createCheckoutSession);
 BillingRouter.get("/verify-session", protect, verifySession);
-// /webhook is registered in server.ts with express.raw() before express.json()
 
 export default BillingRouter;

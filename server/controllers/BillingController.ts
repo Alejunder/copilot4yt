@@ -19,10 +19,7 @@ const PLAN_CREDITS: Record<Exclude<Plan, 'free'>, number> = {
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
-/**
- * Checks whether the user's paid plan has expired.
- * If it has, downgrades plan to "free" in both User and Credits documents.
- */
+
 async function checkAndExpirePlan(userId: string): Promise<void> {
     const user = await User.findById(userId).select("plan planExpiresAt");
     if (!user || user.plan === "free") return;
@@ -68,12 +65,10 @@ export const getCredits = async (
     try {
         const userId = (req as any).userId;
 
-        // Expire plan if 30-day window has passed
         await checkAndExpirePlan(userId);
 
         let creditsDoc = await Credits.findOne({ userId });
 
-        // Initialize free users with 20 credits on first access
         if (!creditsDoc) {
             creditsDoc = await Credits.create({
                 userId,
@@ -82,7 +77,6 @@ export const getCredits = async (
                 lastDailyCreditReset: new Date(),
             });
         } else if (creditsDoc.plan === "free") {
-            // Apply daily reset if 24h have passed
             const now = Date.now();
             const lastReset = creditsDoc.lastDailyCreditReset ? creditsDoc.lastDailyCreditReset.getTime() : 0;
             if (now - lastReset > 24 * 60 * 60 * 1000) {
@@ -96,7 +90,6 @@ export const getCredits = async (
 
         let planExpiresAt: Date | null = user?.planExpiresAt ?? null;
 
-        // One-time migration: backfill planExpiresAt for paid users who pre-date this feature
         if (!planExpiresAt && creditsDoc.plan !== "free") {
             const paymentDate: Date = (creditsDoc as any).updatedAt ?? new Date();
             planExpiresAt = new Date(paymentDate.getTime() + THIRTY_DAYS_MS);
@@ -137,7 +130,6 @@ export const handleStripeWebhook = async (
         if (event.type === "checkout.session.completed") {
             const session = event.data.object as Stripe.Checkout.Session;
 
-            // Only credit users for confirmed payments
             if (session.payment_status !== "paid") {
                 res.status(200).json({ message: "Webhook received." });
                 return;
@@ -164,7 +156,6 @@ export const handleStripeWebhook = async (
 
             const stripeCustomerId = typeof session.customer === "string" ? session.customer : undefined;
 
-            // Idempotency: skip if this exact payment was already applied
             if (paymentId) {
                 const alreadyApplied = await Credits.findOne({ userId: user._id, stripePaymentId: paymentId });
                 if (alreadyApplied) {
@@ -173,7 +164,6 @@ export const handleStripeWebhook = async (
                 }
             }
 
-            // Sync plan to User document (single source of truth for plan)
             await User.findByIdAndUpdate(user._id, {
                 $set: {
                     plan,
@@ -199,11 +189,6 @@ export const handleStripeWebhook = async (
     }
 };
 
-/**
- * Called immediately when the user lands on /dashboard?session_id=...
- * Verifies the Stripe session directly (no webhook timing dependency) and
- * applies the plan + credits if not already applied.
- */
 export const verifySession = async (
     req: Request,
     res: Response
@@ -231,7 +216,7 @@ export const verifySession = async (
 
         const paymentId = typeof session.payment_intent === "string" ? session.payment_intent : undefined;
 
-        // Idempotency: skip if this exact payment was already applied
+
         if (paymentId) {
             const alreadyApplied = await Credits.findOne({ userId, stripePaymentId: paymentId });
             if (alreadyApplied) {

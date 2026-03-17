@@ -9,7 +9,6 @@ if (!JWT_SECRET) {
 }
 const JWT_EXPIRES_IN = '7d';
 
-//Controllers for user registration
 export const registerUser = async (req: Request, res: Response) => {
   try {
     const { name, email, password } = req.body;
@@ -38,7 +37,6 @@ export const registerUser = async (req: Request, res: Response) => {
   }
 };
 
-//Controllers for user login
 export const loginUser = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
@@ -65,14 +63,11 @@ export const loginUser = async (req: Request, res: Response) => {
   }
 };
 
-//Controllers for user logout
 export const logoutUser = async (req: Request, res: Response) => {
-  // With JWT, logout is handled client-side by removing the token from localStorage.
-  // No server-side action required.
+ 
   return res.json({ message: "User logged out successfully" });
 };
 
-//Controllers for user verify
 export const verifyUser = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;

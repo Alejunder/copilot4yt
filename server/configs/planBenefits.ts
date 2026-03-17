@@ -1,11 +1,11 @@
 export type Plan = 'free' | 'basic' | 'pro' | 'enterprise';
 
 export interface PlanBenefits {
-    /** Whether the user may upload a reference image for generation. */
+ 
     referenceImageAllowed: boolean;
-    /** Credits refilled every 24 h — only applies to the free plan. */
+   
     dailyCredits: number | null;
-    /** Human-readable short description shown in the UI. */
+ 
     description: string;
 }
 
